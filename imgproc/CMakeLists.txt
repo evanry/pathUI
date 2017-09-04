@@ -1,0 +1,12 @@
+SET(OpenCV_DIR E:/download/opencv/build)
+set(OpenCV_LIBS E:/download/opencv/build/x64/vc12/lib)
+set(OpenCV_INCLUDE_DIRS E:/download/opencv/build/include)
+
+IF(NOT OpenCV_LIBS)
+  FIND_PACKAGE(OpenCV)
+  MESSAGE(${OpenCV_LIBRARIES})
+ENDIF()
+ADD_SUBDIRECTORY(basicfilters)
+ADD_SUBDIRECTORY(opencv)
+ADD_SUBDIRECTORY(NucleiSegmentation)
+ADD_SUBDIRECTORY(wholeslide)
