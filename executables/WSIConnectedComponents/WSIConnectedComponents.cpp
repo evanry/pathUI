@@ -3,7 +3,7 @@
 
 #include "MultiResolutionImageReader.h"
 #include "MultiResolutionImage.h"
-#include "ConnectedComponentsWholeSlideFilter.h"
+#include "imgproc/wholeslide/ConnectedComponentsWholeSlideFilter.h"
 #include "core/filetools.h"
 #include "core/CmdLineProgressMonitor.h"
 #include "config/ASAPMacros.h"

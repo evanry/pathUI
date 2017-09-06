@@ -45,8 +45,8 @@ QLabel {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>440</width>
-     <height>776</height>
+     <width>398</width>
+     <height>797</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -66,6 +66,13 @@ QLabel {
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QPushButton" name="BeginPushButton">
+        <property name="text">
+         <string>Begin</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -79,13 +86,30 @@ QLabel {
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="BeginPushButton">
+       <widget class="QPushButton" name="showpushButton">
         <property name="text">
-         <string>Begin</string>
+         <string>show image</string>
         </property>
        </widget>
       </item>
      </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="lineEdit_2"/>
     </item>
     <item>
      <widget class="QGroupBox" name="VisualizationGroupBox">

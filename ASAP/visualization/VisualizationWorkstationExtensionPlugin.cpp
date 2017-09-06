@@ -22,7 +22,11 @@
 //#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QHostAddress>
 #include <QMessageBox>
+//#include <QLineEdit>
+//#include <QProgressBar>
 
+QHostAddress SERVERADDR=QHostAddress("10.18.129.173");
+const quint16 PORT=1125;
 
 VisualizationWorkstationExtensionPlugin::VisualizationWorkstationExtensionPlugin() :
   WorkstationExtensionPluginInterface(),
@@ -39,6 +43,7 @@ VisualizationWorkstationExtensionPlugin::VisualizationWorkstationExtensionPlugin
   _lst = std::make_shared<AnnotationList>();
   _xmlRepo = std::make_shared<XmlRepository>(_lst);
   _settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "DIAG", "ASAP", this);
+
 
 }
 
@@ -76,6 +81,11 @@ QDockWidget* VisualizationWorkstationExtensionPlugin::getDockWidget() {
   _segmentationCheckBox = content->findChild<QCheckBox*>("SegmentationCheckBox");
   QPushButton* openResultButton = content->findChild<QPushButton*>("OpenResultPushButton");
   QPushButton* beginButton = content->findChild<QPushButton*>("BeginPushButton");
+  QPushButton* showButton=content->findChild<QPushButton*>("showpushButton");
+  //filen=content->findChild<QLabel*>("LUTLable");
+  fName=content->findChild<QLineEdit*>("lineEdit");
+  info=content->findChild<QLineEdit*>("lineEdit_2");
+  progress=content->findChild<QProgressBar*>("progressBar");
   QComboBox* LUTBox = content->findChild<QComboBox*>("LUTComboBox");
   LUTBox->setEditable(false);
   for (std::map<std::string, pathology::LUT>::const_iterator it = pathology::ColorLookupTables.begin(); it != pathology::ColorLookupTables.end(); ++it) {
@@ -90,17 +100,143 @@ QDockWidget* VisualizationWorkstationExtensionPlugin::getDockWidget() {
   connect(channelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onChannelChanged(int)));
   connect(openResultButton, SIGNAL(clicked()), this, SLOT(onOpenResultImageClicked()));
   connect(beginButton, SIGNAL(clicked()), this, SLOT(onBeginClicked()));
+  connect(showButton, SIGNAL(clicked()), this, SLOT(onShowClicked()));
   connect(LUTBox, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onLUTChanged(const QString&)));
   _dockWidget->setEnabled(true);
 
   // Not used for know
   QGroupBox* segmentationGroupBox = content->findChild<QGroupBox*>("SegmentationGroupBox");
   segmentationGroupBox->setVisible(false);
-  //QPushButton* beginButton = content->findChild<QPushButton*>("BeginPushButton");
-  //connect(beginButton, SIGNAL(clicked()), this, SLOT(onBeginClicked()));
-  //beginButton->setEnabled(true);
+  //fName->setEnabled(false);
+  fName->setStyleSheet("QLineEdit{border-width:0;border-style:outset}");
+  fName->setFocusPolicy(Qt::NoFocus);
+  fName->setVisible(false);
+  progress->setVisible(false);
   return _dockWidget;
 }
+
+
+void VisualizationWorkstationExtensionPlugin::onBeginClicked() {
+    QString qfilename=QFileDialog::getOpenFileName(_dockWidget, tr("Choose File"), _settings->value("lastChoosedPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Choose files (*.tif);;All files (*.*)"));
+    if(!qfilename.isEmpty()) {
+        QStringList secs= qfilename.split(QRegExp("[/]"));
+        int len=secs.length();
+        f_name=secs.at(len-1);
+        fName->setText(f_name);
+        //filen->setText("&f_name");
+        //filen->setVisible(true);
+        fName->setVisible(true);
+        progress->setMaximum(100);
+        progress->setValue(0);
+        progress->setVisible(true);
+        //filename=f_name.toStdString().c_str();
+        socketTrans();
+    }
+}
+
+void VisualizationWorkstationExtensionPlugin::onShowClicked(){
+
+}
+
+void VisualizationWorkstationExtensionPlugin::socketTrans(){
+    c_blockSize=0;
+    fileLen=received=0;
+    file=Q_NULLPTR;
+    //bool conned;
+
+    //cSocket=new QTcpSocket(_dockWidget);
+    cSocket=new QTcpSocket(this);
+    cSocket->abort();
+    connect(cSocket,SIGNAL(connected()),this,SLOT(sendFileName()));
+    connect(cSocket,SIGNAL(readyRead()),this,SLOT(readMessageFromTCPServer()));
+    cSocket->connectToHost(SERVERADDR,PORT);
+    cSocket->waitForConnected();
+    cSocket->waitForReadyRead();
+
+    connect(cSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(displayError(QAbstractSocket::SocketError)));
+}
+
+void VisualizationWorkstationExtensionPlugin::sendFileName(){
+    cSocket->waitForBytesWritten();
+    cSocket->write(f_name.toStdString().c_str(),strlen(f_name.toStdString().c_str()));
+    cSocket->flush();
+}
+
+void VisualizationWorkstationExtensionPlugin::readMessageFromTCPServer()
+{
+
+    QString r_str=cSocket->readAll();
+    //info->setText(r_str);
+    int val=std::stoi(r_str.toStdString());
+    progress->setValue(val);
+    while (val<100) {
+        bool read= cSocket->waitForReadyRead();
+        if(read){
+        r_str=cSocket->readAll();
+        val=std::stoi(r_str.toStdString());
+        progress->setValue(val);
+        }
+    }
+    /*
+    QDataStream in(cSocket);
+    in.setVersion(QDataStream::Qt_5_9);
+    if(received<=sizeof(qint64))
+    {
+        if(cSocket->bytesAvailable()<static_cast<int>(sizeof(qint64)))  return;
+        in>>fileLen;
+        received+=sizeof(qint64);
+        progress->setMaximum(fileLen);
+        progress->setValue(received);
+        //in>>c_blockSize;
+    }
+    if(cSocket->bytesAvailable()<c_blockSize)  return;
+    QString recFName;
+    in>>recFName;
+
+    if(!recFName.isEmpty() && file == Q_NULLPTR)
+    {
+            file = new QFile(recFName);
+            if(!file->open(QFile::WriteOnly))
+            {
+                delete file;
+                file = Q_NULLPTR;
+                return;
+            }
+    }
+    if(file == Q_NULLPTR)
+        return;
+
+    if(received<fileLen){
+        received+=cSocket->bytesAvailable();
+        progress->setValue(received);
+        file->write(cSocket->readAll());
+    }
+    if(received==fileLen){
+        cSocket->close();
+        file->close();
+    }
+    //QString str = cSocket->readAll();
+    */
+}
+
+void VisualizationWorkstationExtensionPlugin::displayError(QAbstractSocket::SocketError socketerror){
+    switch (socketerror) {
+    case QAbstractSocket::RemoteHostClosedError:
+
+        break;
+    case QAbstractSocket::HostNotFoundError:
+        QMessageBox::information(_dockWidget,tr("client request"),tr("host not found."));
+        break;
+    case QAbstractSocket::ConnectionRefusedError:
+        QMessageBox::information(_dockWidget,tr("client request"),tr("connection was refused."));
+        break;
+    default:
+        QMessageBox::information(_dockWidget,tr("client request"),tr("the following error occured:%1.").arg(cSocket->errorString()));
+        break;
+    }
+
+}
+
 
 void VisualizationWorkstationExtensionPlugin::onNewImageLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName) {
   std::shared_ptr<MultiResolutionImage> local_img = img.lock();
@@ -124,54 +260,12 @@ void VisualizationWorkstationExtensionPlugin::onNewImageLoaded(std::weak_ptr<Mul
 }
 
 void VisualizationWorkstationExtensionPlugin::onOpenResultImageClicked() {
-  QString fileName = QFileDialog::getOpenFileName(_dockWidget, tr("Open File"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Result files (*.tif);;All files (*.*)"));
+  QString fileName = QFileDialog::getOpenFileName(_dockWidget, tr("Open File"),_settings->value("lastChoosedPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(),tr("Result files (*.tif);;All files (*.*)"));
   if (!fileName.isEmpty()) {
     loadNewForegroundImage(fileName.toStdString());
   }
 }
 
-
-void VisualizationWorkstationExtensionPlugin::onBeginClicked() {
-    QString filename=QFileDialog::getOpenFileName(_dockWidget, tr("Choose File"), _settings->value("lastChoosedPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Choose files (*.tif);;All files (*.*)"));
-    if(!filename.isEmpty()) {
-
-        socketTrans(filename.toStdString().c_str());
-    }
-}
-
-void VisualizationWorkstationExtensionPlugin::socketTrans(const char *filename){
-    cSocket=new QTcpSocket(_dockWidget);
-    cSocket->abort();
-    cSocket->connectToHost(QHostAddress("10.18.129.173"),8888);
-    connect(cSocket,SIGNAL(readyRead()),this,SLOT(readMessageFromTCPServer(cSocket)));
-    cSocket->write(filename,strlen(filename));
-    //if()
-    connect(cSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(displayError(QAbstractSocket::SocketError)));
-}
-
-
-void VisualizationWorkstationExtensionPlugin::readMessageFromTCPServer(QTcpSocket *cSocket)
-{
-    QString str = cSocket->readAll();
-}
-
-void VisualizationWorkstationExtensionPlugin::displayError(QAbstractSocket::SocketError socketerror){
-    switch (socketerror) {
-    case QAbstractSocket::RemoteHostClosedError:
-
-        break;
-    case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(_dockWidget,tr("client request"),tr("host not found."));
-        break;
-    case QAbstractSocket::ConnectionRefusedError:
-        QMessageBox::information(_dockWidget,tr("client request"),tr("connection was refused."));
-        break;
-    default:
-        QMessageBox::information(_dockWidget,tr("client request"),tr("the following error occured:%1.").arg(cSocket->errorString()));
-        break;
-    }
-
-}
 
 void VisualizationWorkstationExtensionPlugin::loadNewForegroundImage(const std::string& resultImagePth) {
   if (_foreground) {

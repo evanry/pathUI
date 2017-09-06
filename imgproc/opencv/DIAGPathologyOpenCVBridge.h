@@ -1,7 +1,7 @@
 #ifndef _DIAGPathologyOpenCVBridge
 #define _DIAGPathologyOpenCVBridge
 
-#include "opencv2/core/core.hpp"
+#include "opencv2/core.hpp"
 #include "core/Patch.h"
 
 //! Converts an OpenCV Mat to a Patch

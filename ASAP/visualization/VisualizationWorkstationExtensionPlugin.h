@@ -5,11 +5,16 @@
 #include "../interfaces/interfaces.h"
 #include <QtNetwork/QTcpSocket>
 #include <QTextEdit>
+#include <QLineEdit>
+#include <QLabel>
+#include <QProgressBar>
+#include "../pathologyworkstation.h"
 
 class QCheckBox;
 class XmlRepository;
 class QGraphicsPolygonItem;
 class AnnotationList;
+class PathologyWorkstation;
 
 class VisualizationWorkstationExtensionPlugin : public WorkstationExtensionPluginInterface
 {
@@ -40,8 +45,18 @@ private :
   void loadNewForegroundImage(const std::string& resultImagePth);
   void setDefaultVisualizationParameters(std::shared_ptr<MultiResolutionImage> img);
   QTcpSocket *cSocket;
+  QLineEdit* fName;
+  QLineEdit* info;
+  //QLabel* filen;
+  QProgressBar* progress;
+  //const char filename;
+  QString f_name;
+  quint16 c_blockSize;
+  qint64 received;
+  qint64 fileLen;
+  QFile* file;
   //QTextEdit *eInfo;
-  void socketTrans(const char * filename);
+  void socketTrans();
 
 public :
     bool initialize(PathologyViewer* viewer);
@@ -58,11 +73,13 @@ public slots:
     void onEnableSegmentationToggled(bool toggled);
     void onOpenResultImageClicked();
     void onBeginClicked();
+    void onShowClicked();
     void onLUTChanged(const QString& LUTname);
     void onWindowValueChanged(double window);
     void onLevelValueChanged(double level);
     void onChannelChanged(int channel);
-    void readMessageFromTCPServer(QTcpSocket *cSocket);
+    void sendFileName();
+    void readMessageFromTCPServer();
     void displayError(QAbstractSocket::SocketError socketerror);
 
 signals: 
