@@ -53,6 +53,7 @@ add_library(annotation SHARED ${ANNOTATION_SOURCE} ${ANNOTATION_HEADERS})
 generate_export_header(annotation)
 TARGET_LINK_LIBRARIES(annotation pugixml core multiresolutionimageinterface)
 SET_TARGET_PROPERTIES(annotation PROPERTIES DEBUG_POSTFIX _d)
+#SET_TARGET_PROPERTIES(annotation PROPERTIES RELEASE_POSTFIX "")
 
 INSTALL(TARGETS annotation
   EXPORT asap-targets

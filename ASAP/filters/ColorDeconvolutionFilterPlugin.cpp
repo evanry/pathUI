@@ -59,7 +59,8 @@ ColorDeconvolutionFilterPlugin::ColorDeconvolutionFilterPlugin(const ColorDeconv
 }
 
 QString ColorDeconvolutionFilterPlugin::name() const {
-  return QString::fromStdString("Color Deconvolution");
+  //return QString::fromStdString("Color Deconvolution");
+    return QString::fromLocal8Bit("ÑÕÉ«·´¾í»ý");
 }
 
 QIcon ColorDeconvolutionFilterPlugin::icon() const {

@@ -28,11 +28,14 @@ SET(ANNOTATION_PLUGIN_HEADERS
   PolyAnnotationTool.h
   PointSetAnnotationTool.h
   SplineAnnotationTool.h
+  MeasurementAnnotationTool.h
   QtAnnotation.h
   QtAnnotationGroup.h
   PolyQtAnnotation.h
   PointSetQtAnnotation.h
   DotQtAnnotation.h
+  MeasurementQtAnnotation.h
+  annotationplugin_export.h
 )
 
 SET(ANNOTATION_PLUGIN_SOURCE
@@ -41,10 +44,12 @@ SET(ANNOTATION_PLUGIN_SOURCE
   DotAnnotationTool.cpp
   PolyAnnotationTool.cpp
   PointSetAnnotationTool.cpp
+  MeasurementAnnotationTool.cpp
   SplineAnnotationTool.cpp
   QtAnnotation.cpp
   QtAnnotationGroup.cpp
   PolyQtAnnotation.cpp
+  MeasurementQtAnnotation.cpp
   PointSetQtAnnotation.cpp
   DotQtAnnotation.cpp
 )
@@ -68,6 +73,7 @@ ENDIF()
 generate_export_header(AnnotationPlugin)
 TARGET_LINK_LIBRARIES(AnnotationPlugin pugixml ASAP core annotation)
 SET_TARGET_PROPERTIES(AnnotationPlugin PROPERTIES DEBUG_POSTFIX _d)
+#SET_TARGET_PROPERTIES(AnnotationPlugin PROPERTIES RELEASE_POSTFIX "")
 
 INSTALL(TARGETS AnnotationPlugin
   RUNTIME DESTINATION bin/plugins/workstationextension

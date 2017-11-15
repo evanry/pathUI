@@ -49,7 +49,8 @@ NucleiDetectionFilterPlugin::NucleiDetectionFilterPlugin(const NucleiDetectionFi
 }
 
 QString NucleiDetectionFilterPlugin::name() const {
-  return _filter ? QString::fromStdString("Nuclei Detection") : QString();
+  //return _filter ? QString::fromStdString("Nuclei Detection") : QString();
+    return _filter ? QString::fromLocal8Bit("Ï¸°ûºË¼ì²â") : QString();
 }
 
 QIcon NucleiDetectionFilterPlugin::icon() const {

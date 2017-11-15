@@ -2,19 +2,26 @@
 #define VISUALIZATIONWORKSTATIONEXTENSIONPLUGIN_H
 
 #include <memory>
+#include "pathologyworkstation.h"
+#include "annotation/AnnotationWorkstationExtensionPlugin.h"
 #include "../interfaces/interfaces.h"
 #include <QtNetwork/QTcpSocket>
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QLabel>
 #include <QProgressBar>
-#include "../pathologyworkstation.h"
+#include <QThread>
+#include <QVBoxLayout>
 
 class QCheckBox;
+class QGroupBox;
 class XmlRepository;
 class QGraphicsPolygonItem;
 class AnnotationList;
-class PathologyWorkstation;
+class AnnotationWorkstationExtensionPlugin;
+class MultiResolutionImage;
+class PathologyViewer;
+class WorkstationExtensionPluginInterface;
 
 class VisualizationWorkstationExtensionPlugin : public WorkstationExtensionPluginInterface
 {
@@ -45,21 +52,22 @@ private :
   void loadNewForegroundImage(const std::string& resultImagePth);
   void setDefaultVisualizationParameters(std::shared_ptr<MultiResolutionImage> img);
   QTcpSocket *cSocket;
-  QLineEdit* fName;
   QLineEdit* info;
-  //QLabel* filen;
   QProgressBar* progress;
-  //const char filename;
+  QLabel* fName;
   QString f_name;
-  quint16 c_blockSize;
-  qint64 received;
-  qint64 fileLen;
-  QFile* file;
-  //QTextEdit *eInfo;
+  QString qfilename;
+  QVBoxLayout* verpro;
+  QVBoxLayout* openedfile;
+  QGroupBox* filelist;
+  QCheckBox *of1;
   void socketTrans();
+  std::shared_ptr<MultiResolutionImage> _img;
+  QList<QtAnnotation*> _qtAnnotations;
 
 public :
     bool initialize(PathologyViewer* viewer);
+    bool initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4);
     VisualizationWorkstationExtensionPlugin();
     ~VisualizationWorkstationExtensionPlugin();
     QDockWidget* getDockWidget();
@@ -67,13 +75,18 @@ public :
 
 public slots:
     void onNewImageLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
+    void onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
     void onImageClosed();
     void onEnableLikelihoodToggled(bool toggled);
     void onOpacityChanged(double opacity);
     void onEnableSegmentationToggled(bool toggled);
     void onOpenResultImageClicked();
     void onBeginClicked();
-    void onShowClicked();
+    void onShowClicked(QString fn_);
+    void onSendClicked(QString fileName);
+    void oncloseclicked(QString fileName);
+    void oncloseclicked2(QString fileName);
+    void changeimg();
     void onLUTChanged(const QString& LUTname);
     void onWindowValueChanged(double window);
     void onLevelValueChanged(double level);
@@ -84,6 +97,32 @@ public slots:
 
 signals: 
     void changeForegroundImage(std::weak_ptr<MultiResolutionImage>, float scale);
+    void switchimg(QString);
+};
+
+class processThread : public QThread
+{
+    Q_OBJECT
+public:
+    processThread(QString fnm,QString ffnm,QProgressBar *progrs);
+protected:
+    void run();
+private:
+    QString flnm;
+    QString fflnm;
+    QProgressBar* prog;
+    QTcpSocket *cSocket;
+    volatile bool stopped;
+    void socketTran();
+    
+public slots:
+    void sendFileName();
+    void readMessageFromTCPServer();
+   // void setProVal(int);
+
+signals:
+    void valChanged(int);
+    void xmldone(QString);
 };
 
 

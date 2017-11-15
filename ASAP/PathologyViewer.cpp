@@ -15,6 +15,11 @@
 #include <QGuiApplication>
 #include <QMainWindow>
 #include <QStatusBar>
+#include <QSlider>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QDialog>
 
 #include "MiniMap.h"
 #include "ScaleBar.h"
@@ -38,14 +43,17 @@ PathologyViewer::PathologyViewer(QWidget *parent):
   _panSensitivity(0.5),
   _numScheduledScalings(0),
   _pan(false),
+  _ruler(false),
   _prevPan(0, 0),
+  _prevRuler(0, 0),
   _map(NULL),
   _cache(NULL),
   _cacheSize(1000 * 512 * 512 * 3),
   _activeTool(NULL),
   _sceneScale(1.),
   _manager(NULL),
-  _scaleBar(NULL)
+  _scaleBar(NULL),
+  actLine(NULL)
 {
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -67,16 +75,28 @@ PathologyViewer::PathologyViewer(QWidget *parent):
   if (this->window()) {
     QMenu* viewMenu = this->window()->findChild<QMenu*>("menuView");
     QAction* action;
-    if (viewMenu) {
-      action = viewMenu->addAction("Toggle scale bar");
+    if (viewMenu->actions().size()<5) {
+      action = viewMenu->addAction(QString::fromLocal8Bit("È«ÆÁ"));
+      action->setCheckable(true);
+      action->setChecked(_settings->value("fullToggled", true).toBool());
+      viewMenu->addSeparator();
+      action = viewMenu->addAction(QString::fromLocal8Bit("±ÈÀý³ß"));
       action->setCheckable(true);
       action->setChecked(_settings->value("scaleBarToggled", true).toBool());
-      action = viewMenu->addAction("Toggle coverage view");
+      action = viewMenu->addAction(QString::fromLocal8Bit("¸²¸ÇÊÓÍ¼"));
       action->setCheckable(true);
       action->setChecked(_settings->value("coverageViewToggled", true).toBool());
-      action = viewMenu->addAction("Toggle mini-map");
+      action = viewMenu->addAction(QString::fromLocal8Bit("ËõÂÔÊÓÍ¼"));
       action->setCheckable(true);
       action->setChecked(_settings->value("miniMapToggled", true).toBool());
+      viewMenu->addSeparator();
+      action = viewMenu->addAction(QString::fromLocal8Bit("×´Ì¬À¸"));
+      action->setCheckable(true);     
+      action->setChecked(_settings->value("statusbarToggled", true).toBool());
+      action = viewMenu->addAction(QString::fromLocal8Bit("Î»ÖÃ×·×Ù"));
+      action->setCheckable(true);
+      action->setChecked(_settings->value("trackerToggled", false).toBool());
+      viewMenu->addSeparator();
     }
   }
   _settings->endGroup();
@@ -112,6 +132,15 @@ void PathologyViewer::resizeEvent(QResizeEvent *event) {
     emit fieldOfViewChanged(FOVImage, _img->getBestLevelForDownSample(maxDownsample / this->transform().m11()));
     emit updateBBox(FOV);
   }
+}
+
+void PathologyViewer::zm5(){
+    zoom(15);
+}
+
+void PathologyViewer::zm(int tm){
+    zoom(tm-prezm);
+    prezm=tm;
 }
 
 void PathologyViewer::wheelEvent(QWheelEvent *event) {
@@ -219,6 +248,46 @@ void PathologyViewer::changeActiveTool() {
     if (newActiveTool) {
       _activeTool = newActiveTool;
       _activeTool->setActive(true);
+      if(_activeTool->name()=="zoom"){
+
+          QSlider *sld=new QSlider();
+          sld->setMinimum(0);
+          sld->setMaximum(50);
+          sld->setSingleStep(10);
+          QDialog *zm=new QDialog();
+          Qt::WindowFlags flags=Qt::Dialog;
+           flags |=Qt::WindowCloseButtonHint;
+           zm->setWindowFlags(flags);
+          zm->setWindowTitle(QString::fromLocal8Bit("Ëõ·Å"));
+
+          QVBoxLayout* vLay=new QVBoxLayout();
+          QPushButton* b1=new QPushButton(QString::fromLocal8Bit("Ô­Í¼"));
+          QPushButton* b2=new QPushButton(QString::fromLocal8Bit("5±¶"));
+          QPushButton* b3=new QPushButton(QString::fromLocal8Bit("10±¶"));
+          QPushButton* b4=new QPushButton(QString::fromLocal8Bit("20±¶"));
+          QPushButton* b5=new QPushButton(QString::fromLocal8Bit("2±¶"));
+          QPushButton* b6=new QPushButton(QString::fromLocal8Bit("0.5±¶"));
+          QPushButton* b7=new QPushButton(QString::fromLocal8Bit("40±¶"));
+          b1->setFixedWidth(95);
+
+          connect(b2, SIGNAL(clicked(bool)), SLOT(zm5()));
+          connect(sld,SIGNAL(valueChanged(int)),this,SLOT(zm(int)));
+
+          vLay->addWidget(b7);
+          vLay->addWidget(b4);
+          vLay->addWidget(b3);
+          vLay->addWidget(b2);
+          vLay->addWidget(b5);
+          vLay->addWidget(b1);
+          vLay->addWidget(b6);
+
+          QHBoxLayout* hLay=new QHBoxLayout();
+          hLay->addLayout(vLay);
+          hLay->addWidget(sld);
+          zm->setLayout(hLay);
+          zm->exec();
+
+      }
     }
     else {
       _activeTool = NULL;
@@ -369,17 +438,18 @@ void PathologyViewer::initializeGUIComponents(unsigned int level) {
   if (this->layout()) {
     delete this->layout();
   }
-  QHBoxLayout * Hlayout = new QHBoxLayout(this);
-  QVBoxLayout * Vlayout = new QVBoxLayout();
-  QVBoxLayout * Vlayout2 = new QVBoxLayout();
+  QVBoxLayout * Hlayout = new QVBoxLayout(this);
+  QHBoxLayout * Vlayout = new QHBoxLayout();
+  QHBoxLayout * Vlayout2 = new QHBoxLayout();
   Vlayout2->addStretch(4);
+  //Hlayout->addStretch(4);
+  Hlayout->setContentsMargins(20, 20, 20, 20);
+  Hlayout->addLayout(Vlayout);
+  Hlayout->addStretch(5);
+  Vlayout->addStretch(5);
   Hlayout->addLayout(Vlayout2);
-  Hlayout->addStretch(4);
-  Hlayout->setContentsMargins(30, 30, 30, 30);
-  Hlayout->addLayout(Vlayout, 1);
-  Vlayout->addStretch(4);
   if (_map) {
-    Vlayout->addWidget(_map, 1);
+    Vlayout->addWidget(_map);
   }
   if (_scaleBar) {
     Vlayout2->addWidget(_scaleBar);
@@ -395,19 +465,19 @@ void PathologyViewer::initializeGUIComponents(unsigned int level) {
     if (viewMenu)  {
       QList<QAction*> actions = viewMenu->actions();
       for (QList<QAction*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        if ((*it)->text() == "Toggle scale bar" && _scaleBar) {
+        if ((*it)->text() == QString::fromLocal8Bit("±ÈÀý³ß") && _scaleBar) {
           QObject::connect((*it), SIGNAL(toggled(bool)), _scaleBar, SLOT(setVisible(bool)));
           bool showComponent = _settings->value("scaleBarToggled", true).toBool();
           (*it)->setChecked(showComponent);
           _scaleBar->setVisible(showComponent);
         }
-        else if ((*it)->text() == "Toggle mini-map" && _map) {
+        else if ((*it)->text() == QString::fromLocal8Bit("ËõÂÔÊÓÍ¼") && _map) {
           QObject::connect((*it), SIGNAL(toggled(bool)), _map, SLOT(setVisible(bool)));
           bool showComponent = _settings->value("miniMapToggled", true).toBool();
           (*it)->setChecked(showComponent);
           _map->setVisible(showComponent);
         }
-        else if ((*it)->text() == "Toggle coverage view" && _map) {
+        else if ((*it)->text() == QString::fromLocal8Bit("¸²¸ÇÊÓÍ¼") && _map) {
           QObject::connect((*it), SIGNAL(toggled(bool)), _map, SLOT(toggleCoverageMap(bool)));
           bool showComponent = _settings->value("coverageViewToggled", true).toBool();
           (*it)->setChecked(showComponent);
@@ -450,13 +520,13 @@ void PathologyViewer::close() {
     if (viewMenu) {
       QList<QAction*> actions = viewMenu->actions();
       for (QList<QAction*>::iterator it = actions.begin(); it != actions.end(); ++it) {
-        if ((*it)->text() == "Toggle scale bar" && _scaleBar) {
+        if ((*it)->text() == "±ÈÀý³ß" && _scaleBar) {
           _settings->setValue("scaleBarToggled", (*it)->isChecked());
         }
-        else if ((*it)->text() == "Toggle mini-map" && _map) {
+        else if ((*it)->text() == "ËõÂÔÊÓÍ¼" && _map) {
           _settings->setValue("miniMapToggled", (*it)->isChecked());
         }
-        else if ((*it)->text() == "Toggle coverage view" && _map) {
+        else if ((*it)->text() == "¸²¸ÇÊÓÍ¼" && _map) {
           _settings->setValue("coverageViewToggled", (*it)->isChecked());
         }
       }
@@ -478,7 +548,7 @@ void PathologyViewer::close() {
     delete _cache;
     _cache = NULL;
   }  
-  _img = NULL;
+  //_img = NULL;
   if (_renderthread) {
     _renderthread->shutdown();
     _renderthread->deleteLater();
@@ -530,6 +600,57 @@ void PathologyViewer::pan(const QPoint& panTo) {
   emit updateBBox(FOV);
 }
 
+void PathologyViewer::toggleRuler(bool ruler, const QPoint &startPos){
+    if(ruler){
+        if(_ruler) return;
+        _ruler=true;
+        _prevRuler=startPos;
+    }
+    else{
+        if(!_ruler) return;
+        _ruler=false;
+        //_prevRuler=QPoint(0,0);
+    }
+}
+
+void PathologyViewer::ruler(QPoint &rulerTo)
+{
+    QPointF imgLoc1 = this->mapToScene(_prevRuler);
+    QPointF imgLoc2 = this->mapToScene(rulerTo);
+    if(!actLine){
+        actLine=new QGraphicsRectItem();
+        actLine->setZValue(std::numeric_limits<float>::max());
+        this->scene()->addItem(actLine);
+    }
+    QPen pen;
+    pen.setWidthF(0);
+    pen.setColor(Qt::black);
+    actLine->setPen(pen);
+    actLine->setRect(imgLoc1.x(),imgLoc1.y(),imgLoc2.x()-imgLoc1.x(),imgLoc2.y()-imgLoc1.y());
+}
+
+void PathologyViewer::rulerDone(QPoint &rulerTo)
+{
+//    QPointF imgLoc1 = this->mapToScene(_prevRuler);
+//    QPointF imgLoc2 = this->mapToScene(rulerTo);
+    actLine=NULL;
+//    double dist=sqrt(pow(imgLoc1.x()/_sceneScale-imgLoc2.x()/_sceneScale,2)+pow(imgLoc1.y()/_sceneScale-imgLoc2.y()/_sceneScale,2));
+//    QGraphicsTextItem* l=new QGraphicsTextItem();
+//    QRectF bound=l->boundingRect();
+//   QGraphicsRectItem *rec=new QGraphicsRectItem(bound,l);
+//    rec->setZValue(std::numeric_limits<float>::max());
+//    l->setZValue(std::numeric_limits<float>::max());
+//    this->scene()->addItem(rec);
+//    this->scene()->addItem(l);
+//    l->setPos((imgLoc1.x()+imgLoc2.x())/2,(imgLoc1.y()+imgLoc2.y())/2);
+//    std::ostringstream s_dist;
+//    s_dist<<dist;
+//    rec->setBrush(Qt::green);
+//    l->setDefaultTextColor(Qt::green);
+//    l->setPlainText(QString::fromStdString(s_dist.str()+"mm"));
+
+}
+
 void PathologyViewer::updateCurrentFieldOfView() {
   float maxDownsample = 1. / this->_sceneScale;
   QRectF FOV = this->mapToScene(this->rect()).boundingRect();
@@ -547,6 +668,7 @@ void PathologyViewer::mousePressEvent(QMouseEvent *event)
     return;
   }
   if (_activeTool && event->button() == Qt::LeftButton) {
+
     _activeTool->mousePressEvent(event);
     if (event->isAccepted()) {
       return;
@@ -575,7 +697,7 @@ void PathologyViewer::mouseReleaseEvent(QMouseEvent *event)
 void PathologyViewer::mouseMoveEvent(QMouseEvent *event)
 {
   QPointF imgLoc = this->mapToScene(event->pos()) / this->_sceneScale;
-  qobject_cast<QMainWindow*>(this->parentWidget()->parentWidget())->statusBar()->showMessage(QString("Current position in image coordinates: (") + QString::number(imgLoc.x()) + QString(", ") + QString::number(imgLoc.y()) + QString(")"), 1000);
+  qobject_cast<QMainWindow*>(this->parentWidget()->parentWidget())->statusBar()->showMessage(QString::fromLocal8Bit("µ±Ç°Í¼ÏñÎ»ÖÃ×ø±êÎª: (") + QString::number(imgLoc.x()) + QString(", ") + QString::number(imgLoc.y()) + QString(")"), 1000);
   if (this->_pan) {
     pan(event->pos());
     event->accept();

@@ -1,4 +1,20 @@
 #include "VisualizationWorkstationExtensionPlugin.h"
+#include "pathologyworkstation.h"
+#include "annotation/DotAnnotationTool.h"
+#include "annotation/PolyAnnotationTool.h"
+#include "annotation/PointSetAnnotationTool.h"
+#include "annotation/SplineAnnotationTool.h"
+#include "annotation/AnnotationService.h"
+#include "annotation/AnnotationList.h"
+#include "annotation/AnnotationGroup.h"
+#include "annotation/QtAnnotation.h"
+#include "annotation/QtAnnotationGroup.h"
+#include "annotation/Annotation.h"
+#include "annotation/ImageScopeRepository.h"
+#include "annotation/AnnotationToMask.h"
+#include "annotation/DotQtAnnotation.h"
+#include "annotation/PolyQtAnnotation.h"
+#include "annotation/PointSetQtAnnotation.h"
 #include "../PathologyViewer.h"
 #include <QDockWidget>
 #include <QtUiTools>
@@ -12,21 +28,34 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QHBoxLayout>
+
+#include "interfaces/interfaces.h"
+#include "WSITileGraphicsItemCache.h"
+#include "config/ASAPMacros.h"
 #include "io/multiresolutionimageinterface/MultiResolutionImageReader.h"
 #include "io/multiresolutionimageinterface/MultiResolutionImage.h"
+#include "io/multiresolutionimageinterface/OpenSlideImage.h"
 #include "core/filetools.h"
 #include "core/PathologyEnums.h"
 #include "annotation/XmlRepository.h"
 #include "annotation/Annotation.h"
 #include "annotation/AnnotationList.h"
-//#include <QtNetwork/QTcpSocket>
+#include <vector>
 #include <QtNetwork/QHostAddress>
 #include <QMessageBox>
+#include <windows.h>
+//#include "pathologyworkstation.h"
+
 //#include <QLineEdit>
 //#include <QProgressBar>
 
 QHostAddress SERVERADDR=QHostAddress("10.18.129.173");
-const quint16 PORT=1125;
+const quint16 PORT=1129;
+
+//QHostAddress SERVERADDR=QHostAddress("127.0.0.1");
+//const quint16 PORT=80100;
+
 
 VisualizationWorkstationExtensionPlugin::VisualizationWorkstationExtensionPlugin() :
   WorkstationExtensionPluginInterface(),
@@ -38,12 +67,12 @@ VisualizationWorkstationExtensionPlugin::VisualizationWorkstationExtensionPlugin
   _window(1.0),
   _level(0.5),
   _foregroundChannel(0),
-  _renderingEnabled(false)
+  _renderingEnabled(false),
+  fName(NULL)
 {
   _lst = std::make_shared<AnnotationList>();
   _xmlRepo = std::make_shared<XmlRepository>(_lst);
   _settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "DIAG", "ASAP", this);
-
 
 }
 
@@ -62,8 +91,17 @@ bool VisualizationWorkstationExtensionPlugin::initialize(PathologyViewer* viewer
   return true;
 }
 
+bool VisualizationWorkstationExtensionPlugin::initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4) {
+  _viewer2 = viewer;
+  _viewer3 = viewer3;
+  _viewer4 = viewer4;
+  connect(this, SIGNAL(changeForegroundImage(std::weak_ptr<MultiResolutionImage>, float)), viewer, SLOT(onForegroundImageChanged(std::weak_ptr<MultiResolutionImage>, float)));
+  return true;
+}
+
 QDockWidget* VisualizationWorkstationExtensionPlugin::getDockWidget() {
-  _dockWidget = new QDockWidget("Cancer detection visualization");
+  _dockWidget = new QDockWidget(QString::fromLocal8Bit("任务管理"));
+  _dockWidget->setObjectName("file");
   QUiLoader loader;
   QFile file(":/VisualizationWorkstationExtensionPlugin_ui/VisualizationWorkstationExtensionPlugin.ui");
   file.open(QFile::ReadOnly);
@@ -77,14 +115,16 @@ QDockWidget* VisualizationWorkstationExtensionPlugin::getDockWidget() {
   QDoubleSpinBox* levelSpinBox = content->findChild<QDoubleSpinBox*>("LevelSpinBox");
   levelSpinBox->setValue(_level);
   QSpinBox* channelSpinBox = content->findChild<QSpinBox*>("ChannelSpinBox");
+  QGroupBox* visgrop=content->findChild<QGroupBox*>("VisualizationGroupBox");
+  visgrop->setVisible(false);
   channelSpinBox->setValue(_foregroundChannel);
   _segmentationCheckBox = content->findChild<QCheckBox*>("SegmentationCheckBox");
   QPushButton* openResultButton = content->findChild<QPushButton*>("OpenResultPushButton");
+  openResultButton->setVisible(false);
   QPushButton* beginButton = content->findChild<QPushButton*>("BeginPushButton");
-  QPushButton* showButton=content->findChild<QPushButton*>("showpushButton");
-  //filen=content->findChild<QLabel*>("LUTLable");
-  fName=content->findChild<QLineEdit*>("lineEdit");
+  fName=content->findChild<QLabel*>("label");
   info=content->findChild<QLineEdit*>("lineEdit_2");
+  info->setVisible(false);
   progress=content->findChild<QProgressBar*>("progressBar");
   QComboBox* LUTBox = content->findChild<QComboBox*>("LUTComboBox");
   LUTBox->setEditable(false);
@@ -100,51 +140,54 @@ QDockWidget* VisualizationWorkstationExtensionPlugin::getDockWidget() {
   connect(channelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onChannelChanged(int)));
   connect(openResultButton, SIGNAL(clicked()), this, SLOT(onOpenResultImageClicked()));
   connect(beginButton, SIGNAL(clicked()), this, SLOT(onBeginClicked()));
-  connect(showButton, SIGNAL(clicked()), this, SLOT(onShowClicked()));
   connect(LUTBox, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onLUTChanged(const QString&)));
   _dockWidget->setEnabled(true);
-
+  //showButton->setVisible(false);
   // Not used for know
   QGroupBox* segmentationGroupBox = content->findChild<QGroupBox*>("SegmentationGroupBox");
   segmentationGroupBox->setVisible(false);
-  //fName->setEnabled(false);
-  fName->setStyleSheet("QLineEdit{border-width:0;border-style:outset}");
-  fName->setFocusPolicy(Qt::NoFocus);
-  fName->setVisible(false);
   progress->setVisible(false);
+  fName->setVisible(false);
+  verpro = content->findChild<QGroupBox*>("groupBox")->findChild<QVBoxLayout*>("vert3");
+  filelist = content->findChild<QGroupBox*>("groupBox_2");
+  openedfile = content->findChild<QGroupBox*>("groupBox_2")->findChild<QVBoxLayout*>("vert3_2");
   return _dockWidget;
 }
 
 
 void VisualizationWorkstationExtensionPlugin::onBeginClicked() {
-    QString qfilename=QFileDialog::getOpenFileName(_dockWidget, tr("Choose File"), _settings->value("lastChoosedPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Choose files (*.tif);;All files (*.*)"));
+  //  qfilename=QFileDialog::getOpenFileName(_dockWidget, tr("Choose File"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Choose files (*.tif);;All files (*.*)"));
+    qfilename=QFileDialog::getOpenFileName(_dockWidget, QString::fromLocal8Bit("选择文件"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), QString::fromLocal8Bit("选择文件 (*.tif);;所有文件 (*.*)"));
+    _settings->setValue("lastOpenendPath", QFileInfo(qfilename).dir().path());
     if(!qfilename.isEmpty()) {
         QStringList secs= qfilename.split(QRegExp("[/]"));
         int len=secs.length();
         f_name=secs.at(len-1);
-        fName->setText(f_name);
-        //filen->setText("&f_name");
-        //filen->setVisible(true);
-        fName->setVisible(true);
-        progress->setMaximum(100);
-        progress->setValue(0);
-        progress->setVisible(true);
-        //filename=f_name.toStdString().c_str();
-        socketTrans();
+//        fName->setText(f_name);
+//        fName->setVisible(true);
+//        progress->setMaximum(100);
+//        progress->setValue(0);
+//        progress->setVisible(true);
+
+        QHBoxLayout* hprogress=new QHBoxLayout();
+        QLabel *label = new QLabel();
+        label->setText(f_name);
+        QProgressBar* tpro=new QProgressBar();
+        tpro->setValue(0);
+        hprogress->addWidget(label);
+        hprogress->addWidget(tpro);
+        verpro->addLayout(hprogress);
+
+        processThread* transThr=new processThread(f_name,qfilename,tpro);
+        connect(transThr,SIGNAL(xmldone(QString)),this,SLOT(onShowClicked(QString)));
+        transThr->start();
+      //  socketTrans();
     }
 }
 
-void VisualizationWorkstationExtensionPlugin::onShowClicked(){
-
-}
 
 void VisualizationWorkstationExtensionPlugin::socketTrans(){
-    c_blockSize=0;
-    fileLen=received=0;
-    file=Q_NULLPTR;
-    //bool conned;
 
-    //cSocket=new QTcpSocket(_dockWidget);
     cSocket=new QTcpSocket(this);
     cSocket->abort();
     connect(cSocket,SIGNAL(connected()),this,SLOT(sendFileName()));
@@ -153,7 +196,7 @@ void VisualizationWorkstationExtensionPlugin::socketTrans(){
     cSocket->waitForConnected();
     cSocket->waitForReadyRead();
 
-    connect(cSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(displayError(QAbstractSocket::SocketError)));
+   // connect(cSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(displayError(QAbstractSocket::SocketError)));
 }
 
 void VisualizationWorkstationExtensionPlugin::sendFileName(){
@@ -164,9 +207,9 @@ void VisualizationWorkstationExtensionPlugin::sendFileName(){
 
 void VisualizationWorkstationExtensionPlugin::readMessageFromTCPServer()
 {
-
+info->setText("IMG1");
     QString r_str=cSocket->readAll();
-    //info->setText(r_str);
+    info->setText("IMG");
     int val=std::stoi(r_str.toStdString());
     progress->setValue(val);
     while (val<100) {
@@ -177,47 +220,35 @@ void VisualizationWorkstationExtensionPlugin::readMessageFromTCPServer()
         progress->setValue(val);
         }
     }
-    /*
-    QDataStream in(cSocket);
-    in.setVersion(QDataStream::Qt_5_9);
-    if(received<=sizeof(qint64))
-    {
-        if(cSocket->bytesAvailable()<static_cast<int>(sizeof(qint64)))  return;
-        in>>fileLen;
-        received+=sizeof(qint64);
-        progress->setMaximum(fileLen);
-        progress->setValue(received);
-        //in>>c_blockSize;
-    }
-    if(cSocket->bytesAvailable()<c_blockSize)  return;
-    QString recFName;
-    in>>recFName;
+    if(val>=100){
 
-    if(!recFName.isEmpty() && file == Q_NULLPTR)
-    {
-            file = new QFile(recFName);
-            if(!file->open(QFile::WriteOnly))
-            {
-                delete file;
-                file = Q_NULLPTR;
-                return;
-            }
-    }
-    if(file == Q_NULLPTR)
-        return;
+        //if (_img) {
+            //info->setText("IMG");
+          //onImageClosed();
+        //}
+//        std::string fn = qfilename.toStdString();
+//        _settings->setValue("lastOpenendPath", QFileInfo(qfilename).dir().path());
+//        _settings->setValue("currentFile", QFileInfo(qfilename).fileName());
 
-    if(received<fileLen){
-        received+=cSocket->bytesAvailable();
-        progress->setValue(received);
-        file->write(cSocket->readAll());
-    }
-    if(received==fileLen){
-        cSocket->close();
-        file->close();
-    }
-    //QString str = cSocket->readAll();
-    */
+//        MultiResolutionImageReader imgReader;
+//        _img.reset(imgReader.open(fn));
+//        if (_img) {
+//          if (_img->valid()) {
+//              if (std::shared_ptr<OpenSlideImage> openslide_img = std::dynamic_pointer_cast<OpenSlideImage>(_img)) {
+//                openslide_img->setIgnoreAlpha(false);
+//              }
+//            _viewer2->initialize(_img);
+//            onxmlLoaded(_img,fn);
+//            }
+//          }
+
+         return;
+
+     }
+
 }
+
+
 
 void VisualizationWorkstationExtensionPlugin::displayError(QAbstractSocket::SocketError socketerror){
     switch (socketerror) {
@@ -235,6 +266,157 @@ void VisualizationWorkstationExtensionPlugin::displayError(QAbstractSocket::Sock
         break;
     }
 
+}
+
+void VisualizationWorkstationExtensionPlugin::onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName) {
+  std::shared_ptr<MultiResolutionImage> local_img = img.lock();
+  _backgroundDimensions = local_img->getDimensions();
+  if (_dockWidget) {
+    _dockWidget->setEnabled(true);
+  }
+  if (!fileName.empty()) {
+    std::string base = core::extractBaseName(fileName);
+
+    std::string likImgPth = core::completePath(base + ".tif", core::extractFilePath(fileName));
+    std::string xmlPath = core::completePath(base + ".xml", core::extractFilePath(fileName));
+    //this->loadNewForegroundImage(likImgPth);
+    if (core::fileExists(xmlPath)) {
+      _xmlRepo->setSource(xmlPath);
+      _xmlRepo->load();
+      addSegmentationsToViewer();
+    }
+  }
+//    AnnotationWorkstationExtensionPlugin *anno=NULL;
+//    anno=new AnnotationWorkstationExtensionPlugin();
+//    anno->onNewImageLoaded(img,fileName);
+}
+
+void VisualizationWorkstationExtensionPlugin::onShowClicked(QString fn_){
+    if (!_qtAnnotations.empty()) {
+      removeSegmentationsFromViewer();
+    }
+    _viewer2->close();
+    _viewer2->setVisible(true);
+    _img.reset();
+            std::string fn = fn_.toStdString();
+            //_settings->setValue("lastOpenendPath", QFileInfo(qfilename).dir().path());
+            //_settings->setValue("currentFile", QFileInfo(fn_).fileName());
+            MultiResolutionImageReader imgReader;
+            _img.reset(imgReader.open(fn));
+            if (_img) {
+              if (_img->valid()) {
+                  if (std::shared_ptr<OpenSlideImage> openslide_img = std::dynamic_pointer_cast<OpenSlideImage>(_img)) {
+                    openslide_img->setIgnoreAlpha(false);
+                  }
+                _viewer2->initialize(_img);
+                onxmlLoaded(_img,fn);
+                }
+              }
+}
+
+void VisualizationWorkstationExtensionPlugin::oncloseclicked(QString ofn){
+    QCheckBox *cf= filelist->findChild<QCheckBox*>(ofn);
+    cf->deleteLater();
+}
+
+void VisualizationWorkstationExtensionPlugin::oncloseclicked2(QString ofn){
+    QCheckBox *cf= filelist->findChild<QCheckBox*>(ofn);
+    cf->setChecked(false);
+}
+
+void VisualizationWorkstationExtensionPlugin::onSendClicked(QString ofn){
+//    if(!fileName.isEmpty()) {
+//        QStringList secs= fileName.split(QRegExp("[/]"));
+//        int len=secs.length();
+//        f_name=secs.at(len-1);
+//        fName->setText(f_name);
+//        fName->setVisible(true);
+//        progress->setMaximum(100);
+//        progress->setValue(0);
+//        progress->setVisible(true);
+//        //processThread* transThr=new processThread(f_name,progress);
+//        //transThr->start();
+//        socketTrans();
+//    }
+  //  QCheckBox *of1=new QCheckBox();
+    of1=new QCheckBox();
+    of1->setCheckable(true);
+    of1->setText(ofn);
+    of1->setChecked(true);
+//    QStringList secs= ofn.split(QRegExp("[/]"));
+//    int len=secs.length();
+    of1->setObjectName(ofn);
+    connect(of1,SIGNAL(clicked(bool)),this,SLOT(changeimg()));
+    openedfile->addWidget(of1);
+}
+
+void VisualizationWorkstationExtensionPlugin::changeimg(){
+    QString sn=sender()->objectName();
+    emit switchimg(sn);
+}
+
+processThread::processThread(QString fnm,QString ffnm, QProgressBar *progrs):
+    flnm(fnm),
+    fflnm(ffnm),
+    stopped(false),
+    prog(progrs)
+{
+    prog->setMaximum(100);
+    moveToThread(this);
+    connect(this,SIGNAL(valChanged(int)),prog,SLOT(setValue(int)));
+}
+
+void processThread::run()
+{
+    //if(!stopped){
+        socketTran();
+    //}
+//    int v=10;
+//    while(v<=100)
+//    {
+
+//    emit valChanged(v);
+//    sleep(3);
+//    v+=10;
+//    }
+}
+
+void processThread::socketTran()
+{
+    cSocket=new QTcpSocket(this);
+    cSocket->abort();
+    connect(cSocket,SIGNAL(connected()),this,SLOT(sendFileName()));
+    connect(cSocket,SIGNAL(readyRead()),this,SLOT(readMessageFromTCPServer()));
+    cSocket->connectToHost(SERVERADDR,PORT,QTcpSocket::ReadWrite);
+    cSocket->waitForConnected();
+    cSocket->waitForReadyRead();
+}
+
+void processThread::sendFileName(){
+    cSocket->waitForBytesWritten();
+    cSocket->write(flnm.toStdString().c_str(),strlen(flnm.toStdString().c_str()));
+    cSocket->flush();
+}
+
+void processThread::readMessageFromTCPServer()
+{
+
+    QString r_str=cSocket->readAll();
+    int val=std::stoi(r_str.toStdString());
+    emit valChanged(val);
+    while (val<100) {
+        bool read= cSocket->waitForReadyRead();
+        if(read){
+        r_str=cSocket->readAll();
+        val=std::stoi(r_str.toStdString());
+        if(val) emit valChanged(val);
+        }
+    }
+    if(val>=100){
+        stopped=true;
+        emit xmldone(fflnm);
+        return;
+    }
 }
 
 
@@ -381,7 +563,9 @@ void VisualizationWorkstationExtensionPlugin::setDefaultVisualizationParameters(
 
 void VisualizationWorkstationExtensionPlugin::onImageClosed() {
   // Store current visualization settings based on ImageType (later replace this with Result specific settings)
-  if (_settings && _foreground) {
+  fName->setVisible(false);
+  progress->setVisible(false);
+    if (_settings && _foreground) {
     _settings->beginGroup("VisualizationWorkstationExtensionPlugin");
     pathology::DataType dtype = _foreground->getDataType();
     if (dtype == pathology::Float) {
@@ -408,18 +592,20 @@ void VisualizationWorkstationExtensionPlugin::onImageClosed() {
   if (!_polygons.empty()) {
     removeSegmentationsFromViewer();
   }
+
   if (_foreground) {
     _foregroundScale = 1;
     emit changeForegroundImage(std::weak_ptr<MultiResolutionImage>(), _foregroundScale);
     _foreground.reset();
   }
   if (_dockWidget) {
-    _dockWidget->setEnabled(false);
+    //_dockWidget->setEnabled(false);
     QGroupBox* segmentationGroupBox = _dockWidget->findChild<QGroupBox*>("SegmentationGroupBox");
     segmentationGroupBox->setEnabled(false);
     QGroupBox* visualizationGroupBox = _dockWidget->findChild<QGroupBox*>("VisualizationGroupBox");
     visualizationGroupBox->setEnabled(false);
   }
+  //onShowClicked();
 }
 
 void VisualizationWorkstationExtensionPlugin::onEnableLikelihoodToggled(bool toggled) {
@@ -479,27 +665,59 @@ void VisualizationWorkstationExtensionPlugin::addSegmentationsToViewer() {
     std::vector<std::shared_ptr<Annotation> > tmp = _lst->getAnnotations();
     float scl = _viewer->getSceneScale();
     for (std::vector<std::shared_ptr<Annotation> >::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-      QPolygonF poly;
-      std::vector<Point> coords = (*it)->getCoordinates();
-      for (std::vector<Point>::iterator pt = coords.begin(); pt != coords.end(); ++pt) {
-        poly.append(QPointF(pt->getX()*scl, pt->getY()*scl));
-      }
-      QGraphicsPolygonItem* cur = new QGraphicsPolygonItem(poly);
-      cur->setBrush(QBrush());
-      cur->setPen(QPen(QBrush(QColor("red")), 1.));
-      _viewer->scene()->addItem(cur);
-      cur->setZValue(std::numeric_limits<float>::max());
-      _polygons.append(cur);
+//      QPolygonF poly;
+//      std::vector<Point> coords = (*it)->getCoordinates();
+//      for (std::vector<Point>::iterator pt = coords.begin(); pt != coords.end(); ++pt) {
+//        poly.append(QPointF(pt->getX()*scl, pt->getY()*scl));
+//      }
+//      QGraphicsPolygonItem* cur = new QGraphicsPolygonItem(poly);
+//      cur->setBrush(QBrush());
+//      cur->setPen(QPen(QBrush(QColor("blue")), 2.));
+//      _viewer->scene()->addItem(cur);
+//      cur->setZValue(std::numeric_limits<float>::max());
+//      _polygons.append(cur);
+
+        QtAnnotation* annot = NULL;
+        if ((*it)->getType() == Annotation::Type::DOT) {
+          annot = new DotQtAnnotation((*it), this, _viewer2->getSceneScale());
+        }
+        else if ((*it)->getType() == Annotation::Type::POLYGON) {
+          annot = new PolyQtAnnotation((*it), this, _viewer2->getSceneScale());
+          dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("linear");
+        }
+        else if ((*it)->getType() == Annotation::Type::SPLINE) {
+          annot = new PolyQtAnnotation((*it), this, _viewer2->getSceneScale());
+          dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("spline");
+        }
+        else if ((*it)->getType() == Annotation::Type::POINTSET) {
+          annot = new PointSetQtAnnotation((*it), this, _viewer2->getSceneScale());
+        }
+        if (annot) {
+          annot->finish();
+          _qtAnnotations.append(annot);
+          _viewer2->scene()->addItem(annot);
+          annot->setZValue(20.);
+        }
+
+
     }
   }
 }
 
 void VisualizationWorkstationExtensionPlugin::removeSegmentationsFromViewer() {
-  if (!_polygons.empty()) {
-    for (QList<QGraphicsPolygonItem*>::iterator it = _polygons.begin(); it != _polygons.end(); ++it) {
-      _viewer->scene()->removeItem(*it);
-      delete (*it);
+//  if (!_polygons.empty()) {
+//    for (QList<QGraphicsPolygonItem*>::iterator it = _polygons.begin(); it != _polygons.end(); ++it) {
+//      _viewer->scene()->removeItem(*it);
+//      delete (*it);
+//    }
+//    _polygons.clear();
+//  }
+
+  if(!_qtAnnotations.empty()){
+    for(QList<QtAnnotation*>::iterator i=_qtAnnotations.begin();i!=_qtAnnotations.end();i++){
+        _viewer->scene()->removeItem(*i);
+        delete (*i);
     }
-    _polygons.clear();
+    _qtAnnotations.clear();
   }
 }

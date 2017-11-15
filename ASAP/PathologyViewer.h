@@ -45,6 +45,15 @@ public:
     void togglePan(bool pan, const QPoint& startPos = QPoint());
     void pan(const QPoint& panTo);
     bool isPanning();
+    void toggleRuler(bool ruler,const QPoint& startPos=QPoint());
+    void ruler(QPoint& rulerTo);
+    void rulerDone(QPoint& rulerTo);
+    bool _ruler;
+    int prezm=0;
+    //QGraphicsLineItem *actLine;
+    QGraphicsRectItem *actLine;
+    //void paintEvent(QPaintEvent *);
+
     void zoom(float numSteps);
    
     bool hasTool(const std::string& toolName) const;
@@ -69,6 +78,8 @@ public slots :
     void changeActiveTool();
     void onFieldOfViewChanged(const QRectF& FOV, const unsigned int level);
     void onForegroundImageChanged(std::weak_ptr<MultiResolutionImage> for_img, float scale);
+    void zm5();
+    void zm(int);
 
 private :
     
@@ -112,6 +123,7 @@ private :
     float _panSensitivity;
     bool _pan;
     QPoint _prevPan;
+    QPoint _prevRuler;
 
     // Members related to rendering
     RenderThread* _renderthread;

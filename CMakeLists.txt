@@ -1,19 +1,22 @@
 cmake_minimum_required(VERSION 2.8)
-PROJECT(DIAGPathology)
+PROJECT(DIAGPathology_release)
+SET(CMAKE_INSTALL_PREFIX E:/DIAGPathology_release)
 
 SET(CURRENT_MAJOR_VERSION 1)
 SET(CURRENT_MINOR_VERSION 6)
 SET(CURRENT_PATCH_VERSION 0)
 set(ASAP_VERSION ${CURRENT_MAJOR_VERSION}.${CURRENT_MINOR_VERSION}.${CURRENT_PATCH_VERSION})
 
+set(CMAKE_BUILD_TYPE Release)
+
 #include(GenerateExportHeader)
 #set(BOOST_ROOT E:/download/ThirdParty/boost_1_65_0/boost)
-#set(BOOST_LIBRARYDIR E:/download/ThirdParty/boost_1_65_0/lib64-msvc-12.0/lib)
+set(BOOST_LIBRARYDIR E:/download/ThirdParty/boost_1_65_0/lib64-msvc-12.0/lib)
 SET(OpenCV_DIR E:/download/opencv/build)
 set(DCMTKJPEG_INCLUDE_DIR E:/download/ThirdParty/dcmtk/include)
 set(DCMTKJPEG_LIBRARIES E:/download/ThirdParty/dcmtk/lib)
 set(Boost_INCLUDE_DIR E:/download/ThirdParty/boost_1_65_0/boost)
-set(Boost_LIBRARY_DIR E:/download/ThirdParty/boost_1_65_0/lib64-msvc-12.0)
+set(Boost_LIBRARY_DIR E:/download/ThirdParty/boost_1_65_0/lib64-msvc-12.0/lib)
 set(JPEG_INCLUDE_DIR E:/download/ThirdParty/jpeg/include)
 set(JPEG_LIBRARY E:/download/ThirdParty/jpeg/lib/libjpeg.lib)
 set(JPEG_LIBRARIES D:/qt/5.9/msvc2013_64/lib/libjpeg.lib)
@@ -48,7 +51,7 @@ SET(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib:$ORIGIN/")
 ENDIF(NOT WIN32)
 
 # Use boost for cross-platform use of threading, file system and date_time handling
-FIND_PACKAGE(Boost REQUIRED COMPONENTS date_time filesystem program_options regex system thread)
+FIND_PACKAGE(Boost 1.56 REQUIRED COMPONENTS date_time filesystem program_options regex system thread)
 SET(Boost_DEFINITIONS "-DBOOST_ALL_DYN_LINK")
 
 # Jasper for JPEG2000 codec
@@ -93,7 +96,7 @@ OPTION(BUILD_DIAG_PATHOLOGY_EXECUTABLES "Builds executables" OFF)
 OPTION(BUILD_DIAG_PATHOLOGY_WORKSTATION "Builds workstation" OFF)
 OPTION(BUILD_DIAG_PATHOLOGY_IMAGEPROCESSING "Builds image processing routines" OFF)
 OPTION(BUILD_DIAG_PATHOLOGY_TESTS "Builds tests" OFF)
-OPTION(PACKAGE_ON_INSTALL "Copies dependent DLLs and packages install" OFF)
+OPTION(PACKAGE_ON_INSTALL "Copies dependent DLLs and packages install" ON)
 
 ADD_SUBDIRECTORY(core)
 ADD_SUBDIRECTORY(io)

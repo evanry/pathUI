@@ -5,9 +5,11 @@
 #include <QDir>
 #include <QStringList>
 #include <memory>
+#include <QDialog>
 
 class MultiResolutionImage;
 class QHBoxLayout;
+class QVBoxLayout;
 class QAction;
 class QStatusBar;
 class QMenuBar;
@@ -15,6 +17,7 @@ class PathologyViewer;
 class WorkstationExtensionPluginInterface;
 class QActionGroup;
 class QSettings;
+class QLabel;
 
 /*
 
@@ -36,17 +39,34 @@ public:
   ~PathologyWorkstation();
 
   void setCacheSize(const unsigned long long& cacheMaxByteSize);
-
+  void openFile(const QString& fileName);
+  void openFile2(const QString& fileName);
+  void on_actionClose_triggered2();
   unsigned long long getCacheSize() const;
 
 signals:
   void newImageLoaded(std::weak_ptr<MultiResolutionImage>, const std::string&);
+  void newImageLoaded2(std::weak_ptr<MultiResolutionImage>, const std::string&);
   void imageClosed();
+  void closeimg(const QString&);
+  void openf(const QString&);
+  void fileSend(const QString&);
 
 private slots:
   void on_actionClose_triggered();
   void on_actionOpen_triggered();
   void on_actionAbout_triggered();
+  void on_actionSend_triggered();
+  void on_actionsave_triggered();
+  void on_actionConnect_triggered();
+  void on_actionRotate_triggered();
+  void onrat();
+  void onrat2();
+  void onrat3();
+  void on_actionInfo_triggered();
+  void on_actionflat_triggered();
+  void on_actionone_triggered();
+  void changeimg(QString);
 
 private:
   static const char* sharedLibraryExtensions;
@@ -64,14 +84,28 @@ private:
   // GUI object
   QAction *actionOpen;
   QAction *actionClose;
+  QAction *actionCloseall;
+  QAction *save;
+  QAction *actionConnect;
+  QAction *rotate;
+  QAction *info;
+  QAction *flat;
+  QAction *one;
+  //QAction *actionSend;
   QAction *actionAbout;
   QActionGroup *_toolActions;
   QWidget *centralWidget;
   QHBoxLayout *horizontalLayout_2;
   PathologyViewer *pathologyView;
+  PathologyViewer *view2;
+  PathologyViewer *view3;
+  PathologyViewer *view4;
   QMenuBar *menuBar;
   QMenu *menuFile;
   QMenu *menuView;
+  QMenu *menuWindow;
+  QMenu *menuTool;
+  QMenu *menuImage;
   QMenu *menuHelp;
   QToolBar *mainToolBar;
   QStatusBar *statusBar;
@@ -83,7 +117,6 @@ private:
   void loadPlugins();
   void readSettings();
   void writeSettings();
-  void openFile(const QString& fileName);
 
   std::vector<std::unique_ptr<WorkstationExtensionPluginInterface> > _extensions;
 };

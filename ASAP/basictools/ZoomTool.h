@@ -18,8 +18,11 @@ public:
 
 private :
   bool _zooming;
+  bool _zooming2;
   QPoint _prevZoomPoint;
   float _accumZoom;
+  QPoint _prevZoomPoint2;
+  float _accumZoom2;
 };
 
 #endif

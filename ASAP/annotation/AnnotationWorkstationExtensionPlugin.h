@@ -27,6 +27,7 @@ class ANNOTATIONPLUGIN_EXPORT AnnotationWorkstationExtensionPlugin : public Work
 
 public :
     bool initialize(PathologyViewer* viewer);
+    bool initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4);
     std::vector<std::shared_ptr<ToolPluginInterface> > getTools();
     AnnotationWorkstationExtensionPlugin();
     ~AnnotationWorkstationExtensionPlugin();
@@ -41,15 +42,19 @@ public :
     bool eventFilter(QObject* watched, QEvent* event);
     void deleteAnnotation(QtAnnotation* annotation);
     void deleteAnnotationGroup(QtAnnotationGroup* group);
+    std::weak_ptr<MultiResolutionImage> getCurrentImage();
     void clearSelection();
     bool canClose();
 
+
 public slots:
     void onNewImageLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
+    void onNewImageLoaded2(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
     void onImageClosed();
     void addAnnotationGroup();
     void onClearButtonPressed();
     void onLoadButtonPressed(const std::string& filePath = std::string());
+    void onLoadButtonPressed2(const std::string& filePath = std::string());
     bool onSaveButtonPressed();
     void onItemNameChanged(QTreeWidgetItem* item, int column);
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column);

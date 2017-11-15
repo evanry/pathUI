@@ -73,6 +73,8 @@ void ScaleBar::paintEvent(QPaintEvent *event) {
   painter.setPen(QPen(QColor("black")));
   painter.setBrush(QColor(255, 255, 255, 80));
   QRectF bar = QRectF(0, 0, _currentWidth, 20);
+  QRectF bar2 = QRectF(3, 3, _currentWidth-6, 14);
+  painter.drawRect(bar2);
   painter.drawRect(bar);
   painter.drawText(bar, Qt::AlignCenter, _currentLabel);
 }

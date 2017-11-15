@@ -3,6 +3,7 @@
 #include "PolyAnnotationTool.h"
 #include "PointSetAnnotationTool.h"
 #include "SplineAnnotationTool.h"
+#include "MeasurementAnnotationTool.h"
 #include "AnnotationService.h"
 #include "AnnotationList.h"
 #include "AnnotationGroup.h"
@@ -13,6 +14,7 @@
 #include "AnnotationToMask.h"
 #include "DotQtAnnotation.h"
 #include "PolyQtAnnotation.h"
+#include "MeasurementQtAnnotation.h"
 #include "PointSetQtAnnotation.h"
 #include "io/multiresolutionimageinterface/MultiResolutionImage.h"
 #include "../PathologyViewer.h"
@@ -59,6 +61,7 @@ AnnotationWorkstationExtensionPlugin::AnnotationWorkstationExtensionPlugin() :
   QFile file(":/AnnotationWorkstationExtensionPlugin_ui/AnnotationDockWidget.ui");
   bool openend = file.open(QFile::ReadOnly);
   _dockWidget = qobject_cast<QDockWidget*>(loader.load(&file));
+  _dockWidget->setObjectName("annot");
   if (_dockWidget) {
     _dockWidget->setEnabled(false);
     _treeWidget = _dockWidget->findChild<QTreeWidget*>("AnnotationTreeWidget");
@@ -149,6 +152,7 @@ void AnnotationWorkstationExtensionPlugin::clearAnnotationList() {
 void AnnotationWorkstationExtensionPlugin::clearQtAnnotations() {
   for (QList<QtAnnotation*>::iterator it = _qtAnnotations.begin(); it != _qtAnnotations.end(); ++it) {
     _viewer->scene()->removeItem(*it);
+    _viewer2->scene()->removeItem(*it);
     (*it)->deleteLater();
   }
   _qtAnnotations.clear();
@@ -180,7 +184,7 @@ void AnnotationWorkstationExtensionPlugin::updateAnnotationToolTip(QtAnnotation*
       if (_currentPixelArea != 1.) {
         areaUnit = QString(" um<sup>2</sup></html>");
       }
-      it.value()->setToolTip(1, QString("<html>Total number of control points: ") + QString::number(nrPoints) + QString("<br/>") + QString("Total area: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
+      it.value()->setToolTip(1, QString::fromLocal8Bit("控制点总数目: ") + QString::number(nrPoints) + QString("<br/>") + QString::fromLocal8Bit("注释区域总面积: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
       QTreeWidgetItem* parentItem = it.value()->parent();
       while (parentItem) {
         if (QtAnnotationGroup* grp = parentItem->data(1, Qt::UserRole).value<QtAnnotationGroup*>()) {
@@ -190,7 +194,7 @@ void AnnotationWorkstationExtensionPlugin::updateAnnotationToolTip(QtAnnotation*
           if (_currentPixelArea != 1.) {
             areaUnit = QString(" um<sup>2</sup></html>");
           }
-          parentItem->setToolTip(1, QString("<html>Total number of control points: ") + QString::number(nrPoints) + QString("<br/>") + QString("Total area: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
+          parentItem->setToolTip(1, QString::fromLocal8Bit("控制点总数目: ") + QString::number(nrPoints) + QString("<br/>") + QString::fromLocal8Bit("注释区域总面积: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
         }
         else if (QtAnnotation* annot = parentItem->data(1, Qt::UserRole).value<QtAnnotation*>()) {
           unsigned int nrPoints = annot->getAnnotation()->getNumberOfPoints();
@@ -199,7 +203,7 @@ void AnnotationWorkstationExtensionPlugin::updateAnnotationToolTip(QtAnnotation*
           if (_currentPixelArea != 1.) {
             areaUnit = QString(" um<sup>2</sup></html>");
           }
-          parentItem->setToolTip(1, QString("<html>Total number of control points: ") + QString::number(nrPoints) + QString("<br/>") + QString("Total area: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
+          parentItem->setToolTip(1, QString::fromLocal8Bit("控制点总数目: ") + QString::number(nrPoints) + QString("<br/>") + QString::fromLocal8Bit("注释区域总面积: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
         }
         parentItem = parentItem->parent();
       }
@@ -213,7 +217,7 @@ void AnnotationWorkstationExtensionPlugin::onTreeWidgetItemDoubleClicked(QTreeWi
     _treeWidget->editItem(item, column);
   }
   else if (_treeWidget && column == 0) {
-    QColor newColor = QColorDialog::getColor(item->data(0, Qt::UserRole).value<QColor>(), NULL, QString("Select a color"));
+    QColor newColor = QColorDialog::getColor(item->data(0, Qt::UserRole).value<QColor>(), NULL, QString::fromLocal8Bit("选择颜色"));
     if (newColor.isValid()) {
       int cHeight = _treeWidget->visualItemRect(item).height();
       QPixmap iconPM(cHeight, cHeight);
@@ -250,6 +254,16 @@ void AnnotationWorkstationExtensionPlugin::onTreeWidgetSelectedItemsChanged() {
       annot->setSelected(true);
       _selectedAnnotations.insert(annot);
       _activeAnnotation = annot;
+      unsigned int nrPoints = annot->getAnnotation()->getNumberOfPoints();
+      float area = annot->getAnnotation()->getArea();
+      QString areaUnit(" pixels.");
+      if (_currentPixelArea != 1.) {
+        areaUnit = QString(" um<sup>2</sup></html>");
+      }
+      _currentAnnotationHeaderLabel->setVisible(true);
+      _currentAnnotationLine->setVisible(true);
+      _currentAnnotationLabel->setVisible(true);
+      _currentAnnotationLabel->setText(QString::fromLocal8Bit("控制点总数目: ") + QString::number(nrPoints) + QString("<br/>") + QString::fromLocal8Bit("注释区域总面积: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
     }
     else {
       if ((*itm)->childCount() > 0) {
@@ -275,9 +289,13 @@ bool AnnotationWorkstationExtensionPlugin::shouldClear() {
   bool shouldClear = false;
   if (_annotationService->getList()->isModified()) {
     QMessageBox msgBox;
-    msgBox.setText("The annotations have been modified.");
-    msgBox.setInformativeText("Do you want to save your changes?");
+    msgBox.setWindowTitle(QString::fromLocal8Bit("病理影像分析系统"));
+    msgBox.setText(QString::fromLocal8Bit("注释已经被修改，"));
+    msgBox.setInformativeText(QString::fromLocal8Bit("需要保存这些修改吗?"));
     msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    msgBox.setButtonText(QMessageBox::Save,QString::fromLocal8Bit("保存"));
+    msgBox.setButtonText(QMessageBox::Discard,QString::fromLocal8Bit("丢弃"));
+    msgBox.setButtonText(QMessageBox::Cancel,QString::fromLocal8Bit("取消"));
     msgBox.setDefaultButton(QMessageBox::Save);
     int ret = msgBox.exec();
     switch (ret) {
@@ -302,7 +320,7 @@ bool AnnotationWorkstationExtensionPlugin::shouldClear() {
 void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string& filePath) {
   QString fileName;
   if (filePath.empty()) {
-    fileName = QFileDialog::getOpenFileName(NULL, tr("Load annotations"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Annotation files(*.xml;*.ndpa)"));
+    fileName = QFileDialog::getOpenFileName(NULL, QString::fromLocal8Bit("加载注释"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), QString::fromLocal8Bit("注释文件(*.xml;*.ndpa)"));
   }
   else {
     fileName = QString::fromStdString(filePath);
@@ -313,8 +331,8 @@ void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string
     }
     clear();
     if (!_annotationService->loadRepositoryFromFile(fileName.toStdString())) {
-      int ret = QMessageBox::warning(NULL, tr("ASAP"),
-        tr("The annotations could not be loaded."),
+      int ret = QMessageBox::warning(NULL, QString::fromLocal8Bit("病理影像分析系统"),
+        QString::fromLocal8Bit("该注释文件无法加载."),
         QMessageBox::Ok);
     }
     // Check if it is an ImageScopeRepository, if so, offer the user the chance to reload with new closing distance
@@ -330,6 +348,153 @@ void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string
         imscRepo->load();
       }
     }
+    // Add loaded groups to treewidget
+    QList<QtAnnotationGroup* > childGroups;
+    std::map<std::shared_ptr<AnnotationGroup>, QTreeWidgetItem*> annotToWidget;
+    std::vector<std::shared_ptr<AnnotationGroup> > grps = _annotationService->getList()->getGroups();
+    for (std::vector<std::shared_ptr<AnnotationGroup> >::const_iterator it = grps.begin(); it != grps.end(); ++it) {
+      QtAnnotationGroup *grp = new QtAnnotationGroup(*it, this);
+      if ((*it)->getGroup() == NULL) {
+        _qtAnnotationGroups.append(grp);
+        QTreeWidgetItem* newAnnotationGroup = new QTreeWidgetItem(_treeWidget);
+        newAnnotationGroup->setText(1, QString::fromStdString((*it)->getName()));
+        newAnnotationGroup->setText(2, QString::fromLocal8Bit("组"));
+        newAnnotationGroup->setData(1, Qt::UserRole, QVariant::fromValue<QtAnnotationGroup*>(grp));
+        newAnnotationGroup->setFlags(newAnnotationGroup->flags() | Qt::ItemIsEditable);
+        int cHeight = _treeWidget->visualItemRect(newAnnotationGroup).height();
+        QPixmap iconPM(cHeight, cHeight);
+        iconPM.fill(QColor((*it)->getColor().c_str()));
+        QIcon color(iconPM);
+        newAnnotationGroup->setIcon(0, color);
+        newAnnotationGroup->setData(0, Qt::UserRole, QColor((*it)->getColor().c_str()));
+        annotToWidget[grp->getAnnotationGroup()] = newAnnotationGroup;
+      }
+      else {
+        childGroups.append(grp);
+      }
+    }
+    while (!childGroups.empty()) {
+      for (QList<QtAnnotationGroup*>::iterator it = childGroups.begin(); it != childGroups.end();) {
+        if (annotToWidget.find((*it)->getAnnotationGroup()->getGroup()) != annotToWidget.end()) {
+          _qtAnnotationGroups.append((*it));
+          QTreeWidgetItem* newAnnotationGroup = new QTreeWidgetItem(annotToWidget[(*it)->getAnnotationGroup()->getGroup()]);
+          newAnnotationGroup->setText(1, QString::fromStdString((*it)->getAnnotationGroup()->getName()));
+          newAnnotationGroup->setText(2, QString::fromLocal8Bit("组"));
+          newAnnotationGroup->setData(1, Qt::UserRole, QVariant::fromValue<QtAnnotationGroup*>((*it)));
+          newAnnotationGroup->setFlags(newAnnotationGroup->flags() | Qt::ItemIsEditable);
+          int cHeight = _treeWidget->visualItemRect(newAnnotationGroup).height();
+          QPixmap iconPM(cHeight, cHeight);
+          iconPM.fill(QColor((*it)->getAnnotationGroup()->getColor().c_str()));
+          QIcon color(iconPM);
+          newAnnotationGroup->setIcon(0, color);
+          newAnnotationGroup->setData(0, Qt::UserRole, QColor((*it)->getAnnotationGroup()->getColor().c_str()));
+          annotToWidget[(*it)->getAnnotationGroup()] = newAnnotationGroup;
+          it = childGroups.erase(it);
+        }
+        else{
+          ++it;
+        }
+      }
+    }
+    std::vector<std::shared_ptr<Annotation> > annots = _annotationService->getList()->getAnnotations();
+    for (std::vector<std::shared_ptr<Annotation> >::const_iterator it = annots.begin(); it != annots.end(); ++it) {
+      QTreeWidgetItem* prnt = _treeWidget->invisibleRootItem();
+      if ((*it)->getGroup()) {
+        prnt = annotToWidget[(*it)->getGroup()];
+      }
+      std::string key = "Annotation " + QString::number(_annotationIndex).toStdString() + "_annotation";
+      
+      // Add QtAnnotation
+      QtAnnotation* annot = NULL;
+      if ((*it)->getType() == Annotation::Type::DOT) {
+        annot = new DotQtAnnotation((*it), this, _viewer->getSceneScale());
+      }
+      else if ((*it)->getType() == Annotation::Type::POLYGON) {
+        annot = new PolyQtAnnotation((*it), this, _viewer->getSceneScale());
+        dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("linear");
+      }
+      else if ((*it)->getType() == Annotation::Type::SPLINE) {
+        annot = new PolyQtAnnotation((*it), this, _viewer->getSceneScale());
+        dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("spline");
+      }
+      else if ((*it)->getType() == Annotation::Type::MEASUREMENT) {
+        annot = new MeasurementQtAnnotation((*it), this, _viewer->getSceneScale());
+      }
+      else if ((*it)->getType() == Annotation::Type::POINTSET) {
+        annot = new PointSetQtAnnotation((*it), this, _viewer->getSceneScale());
+      }
+      if (annot) {
+        annot->finish();
+        _qtAnnotations.append(annot);
+        _viewer->scene()->addItem(annot);
+        annot->setZValue(20.);
+
+
+        _annotationIndex += 1;
+        QTreeWidgetItem* newAnnotation = new QTreeWidgetItem(prnt);
+        newAnnotation->setText(1, QString::fromStdString((*it)->getName()));
+        //newAnnotation->setText(2, QString::fromStdString((*it)->getTypeAsString()));
+        std::string typestr=(*it)->getTypeAsString();
+        if(typestr=="Dot"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("点"));
+        }
+        else if(typestr=="Polygon"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("多边形"));
+        }
+        else if(typestr=="Spline"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("样条"));
+        }
+        else if(typestr=="measure"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("测量"));
+        }
+        else if(typestr=="PointSet"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("点集"));
+        }
+        else if(typestr=="None"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("空"));
+        }
+        newAnnotation->setFlags(newAnnotation->flags() & ~Qt::ItemIsDropEnabled);
+        newAnnotation->setFlags(newAnnotation->flags() | Qt::ItemIsEditable);
+        newAnnotation->setData(1, Qt::UserRole, QVariant::fromValue<QtAnnotation*>(annot));
+        int cHeight = _treeWidget->visualItemRect(newAnnotation).height();
+        if (_treeWidget->topLevelItemCount() > 0) {
+          cHeight = _treeWidget->visualItemRect(_treeWidget->topLevelItem(0)).height();
+        }
+        QPixmap iconPM(cHeight, cHeight);
+        iconPM.fill(QColor((*it)->getColor().c_str()));
+        QIcon color(iconPM);
+        newAnnotation->setIcon(0, color);
+        newAnnotation->setData(0, Qt::UserRole, QColor((*it)->getColor().c_str()));
+        _annotToItem[annot] = newAnnotation;
+        updateAnnotationToolTip(annot);
+        connect(annot, SIGNAL(annotationChanged(QtAnnotation*)), this, SLOT(updateAnnotationToolTip(QtAnnotation*)));
+      }
+    }
+    _treeWidget->resizeColumnToContents(0);
+    _treeWidget->resizeColumnToContents(1);
+  }
+}
+
+
+void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed2(const std::string& filePath) {
+  QString fileName;
+  if (filePath.empty()) {
+    fileName = QFileDialog::getOpenFileName(NULL, tr("Load annotations"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), tr("Annotation files(*.xml;*.ndpa)"));
+  }
+  else {
+    fileName = QString::fromStdString(filePath);
+  }
+  if (!fileName.isEmpty()) {
+    if (!shouldClear()) {
+      return;
+    }
+   // clear();
+    if (!_annotationService->loadRepositoryFromFile(fileName.toStdString())) {
+      int ret = QMessageBox::warning(NULL, tr("ASAP"),
+        tr("The annotations could not be loaded."),
+        QMessageBox::Ok);
+    }
+
     // Add loaded groups to treewidget
     QList<QtAnnotationGroup* > childGroups;
     std::map<std::shared_ptr<AnnotationGroup>, QTreeWidgetItem*> annotToWidget;
@@ -385,27 +550,27 @@ void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string
         prnt = annotToWidget[(*it)->getGroup()];
       }
       std::string key = "Annotation " + QString::number(_annotationIndex).toStdString() + "_annotation";
-      
+
       // Add QtAnnotation
       QtAnnotation* annot = NULL;
       if ((*it)->getType() == Annotation::Type::DOT) {
-        annot = new DotQtAnnotation((*it), this, _viewer->getSceneScale());
+        annot = new DotQtAnnotation((*it), this, _viewer2->getSceneScale());
       }
       else if ((*it)->getType() == Annotation::Type::POLYGON) {
-        annot = new PolyQtAnnotation((*it), this, _viewer->getSceneScale());
+        annot = new PolyQtAnnotation((*it), this, _viewer2->getSceneScale());
         dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("linear");
       }
       else if ((*it)->getType() == Annotation::Type::SPLINE) {
-        annot = new PolyQtAnnotation((*it), this, _viewer->getSceneScale());
+        annot = new PolyQtAnnotation((*it), this, _viewer2->getSceneScale());
         dynamic_cast<PolyQtAnnotation*>(annot)->setInterpolationType("spline");
       }
       else if ((*it)->getType() == Annotation::Type::POINTSET) {
-        annot = new PointSetQtAnnotation((*it), this, _viewer->getSceneScale());
+        annot = new PointSetQtAnnotation((*it), this, _viewer2->getSceneScale());
       }
       if (annot) {
         annot->finish();
         _qtAnnotations.append(annot);
-        _viewer->scene()->addItem(annot);
+        _viewer2->scene()->addItem(annot);
         annot->setZValue(20.);
 
 
@@ -439,17 +604,18 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
   QDir defaultName = _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString();
   QString basename = QFileInfo(_settings->value("currentFile", QString()).toString()).completeBaseName();
   if (basename.isEmpty()) {
-    basename = QString("annotation.xml");
+    //basename = QString("annotation.xml");
+      basename = QString::fromLocal8Bit("注释.xml");
   }
   else {
     basename += QString(".xml");
   }
-  QString fileName = QFileDialog::getSaveFileName(NULL, tr("Save annotations"), defaultName.filePath(basename), tr("XML file (*.xml);TIF file (*.tif)"));
+  QString fileName = QFileDialog::getSaveFileName(NULL, QString::fromLocal8Bit("保存注释"), defaultName.filePath(basename), QString::fromLocal8Bit("XML 文件 (*.xml);TIF 文件 (*.tif)"));
   if (fileName.endsWith(".tif")) {
     if (std::shared_ptr<MultiResolutionImage> local_img = _img.lock()) {
       std::vector<std::shared_ptr<AnnotationGroup> > grps = this->_annotationService->getList()->getGroups();
       QDialog* nameToLabel = new QDialog();
-      nameToLabel->setWindowTitle("Assign labels to annotation groups");
+      nameToLabel->setWindowTitle(QString::fromLocal8Bit("为注释组指定标签"));
       QVBoxLayout* dialogLayout = new QVBoxLayout();
       QFormLayout* nameToLabelLayout = new QFormLayout();
       QHBoxLayout* buttonLayout = new QHBoxLayout();
@@ -458,7 +624,7 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
         label->setMinimum(0);
         label->setValue(1);
         label->setObjectName("All annotations");
-        nameToLabelLayout->addRow("All annotations", label);
+        nameToLabelLayout->addRow(QString::fromLocal8Bit("所有注释"), label);
       }
       else {
         for (unsigned int i = 0; i < grps.size(); ++i) {
@@ -473,8 +639,8 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
         }
       }
       dialogLayout->addLayout(nameToLabelLayout);
-      QPushButton* cancel = new QPushButton("Cancel");
-      QPushButton* ok = new QPushButton("Ok");
+      QPushButton* cancel = new QPushButton(QString::fromLocal8Bit("取消"));
+      QPushButton* ok = new QPushButton(QString::fromLocal8Bit("确定"));
       cancel->setDefault(true);
       connect(cancel, SIGNAL(clicked()), nameToLabel, SLOT(reject()));
       connect(ok, SIGNAL(clicked()), nameToLabel, SLOT(accept()));
@@ -497,6 +663,7 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
         maskConverter.setProgressMonitor(&monitor);
         QProgressDialog progressDialog;
         QObject::connect(&monitor, SIGNAL(progressChanged(int)), &progressDialog, SLOT(setValue(int)));
+        progressDialog.setWindowTitle(QString::fromLocal8Bit("病理影像分析系统"));
         progressDialog.setMinimum(0);
         progressDialog.setMaximum(100);
         progressDialog.setCancelButton(NULL);
@@ -515,8 +682,8 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
   }
   else if (!fileName.isEmpty()) {
     if (!_annotationService->saveRepositoryToFile(fileName.toStdString())) {
-      int ret = QMessageBox::warning(NULL, tr("ASAP"),
-        tr("The annotations could not be saved."),
+      int ret = QMessageBox::warning(NULL, QString::fromLocal8Bit("病理影像分析系统"),
+        QString::fromLocal8Bit("无法保存这些注释。"),
         QMessageBox::Ok);
       return false;
     }
@@ -602,14 +769,15 @@ void AnnotationWorkstationExtensionPlugin::addAnnotationGroup() {
   if (_treeWidget && _annotationService) {
     std::shared_ptr<AnnotationGroup> grp = std::make_shared<AnnotationGroup>();
     QtAnnotationGroup* annotGroup = new QtAnnotationGroup(grp, this);
-    grp->setName("Annotation Group " + QString::number(_annotationGroupIndex).toStdString());
+    //grp->setName("Annotation Group " + QString::number(_annotationGroupIndex).toStdString());
+    grp->setName((QString::fromLocal8Bit("注释组")+ QString::number(_annotationGroupIndex)).toStdString());
     _annotationGroupIndex += 1;
     QString grpUID = QString::fromStdString(grp->getName() + "_group");
     _annotationService->getList()->addGroup(grp);
     _qtAnnotationGroups.append(annotGroup);
     QTreeWidgetItem* newAnnotationGroup = new QTreeWidgetItem(_treeWidget);
     newAnnotationGroup->setText(1, QString::fromStdString(grp->getName()));
-    newAnnotationGroup->setText(2, "Group");
+    newAnnotationGroup->setText(2, QString::fromLocal8Bit("组"));
     newAnnotationGroup->setData(1, Qt::UserRole, QVariant::fromValue<QtAnnotationGroup* >(annotGroup));
     newAnnotationGroup->setFlags(newAnnotationGroup->flags() | Qt::ItemIsEditable);
     int cHeight = _treeWidget->visualItemRect(newAnnotationGroup).height();
@@ -650,6 +818,33 @@ void AnnotationWorkstationExtensionPlugin::onNewImageLoaded(std::weak_ptr<MultiR
   }
 }
 
+void AnnotationWorkstationExtensionPlugin::onNewImageLoaded2(std::weak_ptr<MultiResolutionImage> img, std::string fileName) {
+  if (_dockWidget) {
+    _dockWidget->setEnabled(true);
+  }
+  if (!fileName.empty()) {
+    std::string annotationPath = fileName;
+    core::changeExtension(annotationPath, "xml");
+    if (core::fileExists(annotationPath)) {
+      onLoadButtonPressed2(annotationPath);
+    }
+  }
+  _img = img;
+  if (std::shared_ptr<MultiResolutionImage> local_img = _img.lock()) {
+    std::vector<double> spacing = local_img->getSpacing();
+    if (spacing.size() > 1) {
+      _currentPixelArea = spacing[0] * spacing[1];
+    }
+    else {
+      _currentPixelArea = 1.;
+    }
+  }
+}
+
+std::weak_ptr<MultiResolutionImage> AnnotationWorkstationExtensionPlugin::getCurrentImage() {
+  return _img;
+}
+
 void AnnotationWorkstationExtensionPlugin::onImageClosed() {
   clear();
   if (_dockWidget) {
@@ -667,6 +862,24 @@ bool AnnotationWorkstationExtensionPlugin::initialize(PathologyViewer* viewer) {
   _annotationTools.push_back(tool);
   tool.reset(new PointSetAnnotationTool(this, viewer));
   _annotationTools.push_back(tool);
+  tool.reset(new MeasurementAnnotationTool(this, viewer));
+  _annotationTools.push_back(tool);
+  _annotationService.reset(new AnnotationService());
+  return true;
+}
+
+bool AnnotationWorkstationExtensionPlugin::initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4) {
+  _viewer2 = viewer;
+  _viewer3 = viewer3;
+  _viewer4 = viewer4;
+//  std::shared_ptr<ToolPluginInterface> tool(new DotAnnotationTool(this, viewer));
+//  _annotationTools.push_back(tool);
+//  tool.reset(new PolyAnnotationTool(this, viewer));
+//  _annotationTools.push_back(tool);
+//  tool.reset(new SplineAnnotationTool(this, viewer));
+//  _annotationTools.push_back(tool);
+//  tool.reset(new PointSetAnnotationTool(this, viewer));
+//  _annotationTools.push_back(tool);
   _annotationService.reset(new AnnotationService());
   return true;
 }
@@ -702,6 +915,11 @@ void AnnotationWorkstationExtensionPlugin::startAnnotation(float x, float y, con
     PointSetQtAnnotation* temp = new PointSetQtAnnotation(annot, this, _viewer->getSceneScale());
     _generatedAnnotation = temp;
   }
+  else if (type == "measurementannotation") {
+    annot->setType(Annotation::Type::MEASUREMENT);
+    MeasurementQtAnnotation* temp = new MeasurementQtAnnotation(annot, this, _viewer->getSceneScale());
+    _generatedAnnotation = temp;
+  }
   else {
     return;
   }
@@ -725,7 +943,7 @@ void AnnotationWorkstationExtensionPlugin::updateGeneratingAnnotationLabel(QtAnn
     if (_currentPixelArea != 1.) {
       areaUnit = QString(" um<sup>2</sup>");
     }
-    _currentAnnotationLabel->setText(QString("Total number of control points: ") + QString::number(nrPoints) + QString("<br/>") + QString("Total area: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
+    _currentAnnotationLabel->setText(QString::fromLocal8Bit("控制点总数目: ") + QString::number(nrPoints) + QString("<br/>") + QString::fromLocal8Bit("注释区域总面积: ") + QString::number(area * _currentPixelArea, 'g', 4) + areaUnit);
   }
   else {
     _currentAnnotationLine->setVisible(false);
@@ -740,14 +958,34 @@ void AnnotationWorkstationExtensionPlugin::finishAnnotation(bool cancel) {
     updateGeneratingAnnotationLabel(NULL);
     disconnect(_generatedAnnotation, SIGNAL(annotationChanged(QtAnnotation*)), this, SLOT(updateGeneratingAnnotationLabel(QtAnnotation*)));
     if (!cancel) {
-      _generatedAnnotation->getAnnotation()->setName("Annotation " + QString::number(_annotationIndex).toStdString());
+      //_generatedAnnotation->getAnnotation()->setName("Annotation " + QString::number(_annotationIndex).toStdString());
+      _generatedAnnotation->getAnnotation()->setName((QString::fromLocal8Bit("注释") + QString::number(_annotationIndex)).toStdString());
       _annotationIndex += 1;
       QString annotUID = QString::fromStdString(_generatedAnnotation->getAnnotation()->getName() + "_annotation");
       _qtAnnotations.append(_generatedAnnotation);
       _annotationService->getList()->addAnnotation(_generatedAnnotation->getAnnotation());
       QTreeWidgetItem* newAnnotation = new QTreeWidgetItem(_treeWidget);
       newAnnotation->setText(1, QString::fromStdString(_generatedAnnotation->getAnnotation()->getName()));
-      newAnnotation->setText(2, QString::fromStdString(_generatedAnnotation->getAnnotation()->getTypeAsString()));
+      //newAnnotation->setText(2, QString::fromStdString(_generatedAnnotation->getAnnotation()->getTypeAsString()));
+      std::string typestr=_generatedAnnotation->getAnnotation()->getTypeAsString();
+      if(typestr=="Dot"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("点"));
+      }
+      else if(typestr=="Polygon"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("多边形"));
+      }
+      else if(typestr=="Spline"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("样条"));
+      }
+      else if(typestr=="measure"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("测量"));
+      }
+      else if(typestr=="PointSet"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("点集"));
+      }
+      else if(typestr=="None"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("空"));
+      }
       newAnnotation->setFlags(newAnnotation->flags() & ~Qt::ItemIsDropEnabled);
       newAnnotation->setFlags(newAnnotation->flags() | Qt::ItemIsEditable);
       newAnnotation->setData(1, Qt::UserRole, QVariant::fromValue<QtAnnotation*>(_generatedAnnotation));

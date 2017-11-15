@@ -71,6 +71,9 @@ TARGET_LINK_LIBRARIES(FilterWorkstationExtensionPlugin ASAP basicfilters multire
 SET_TARGET_PROPERTIES(NucleiDetectionFilterPlugin PROPERTIES DEBUG_POSTFIX _d)
 SET_TARGET_PROPERTIES(ColorDeconvolutionFilterPlugin PROPERTIES DEBUG_POSTFIX _d)
 SET_TARGET_PROPERTIES(FilterWorkstationExtensionPlugin PROPERTIES DEBUG_POSTFIX _d)
+#SET_TARGET_PROPERTIES(NucleiDetectionFilterPlugin PROPERTIES RELEASE_POSTFIX "")
+#SET_TARGET_PROPERTIES(ColorDeconvolutionFilterPlugin PROPERTIES RELEASE_POSTFIX "")
+#SET_TARGET_PROPERTIES(FilterWorkstationExtensionPlugin PROPERTIES RELEASE_POSTFIX "")
 
 INSTALL(TARGETS ColorDeconvolutionFilterPlugin NucleiDetectionFilterPlugin
   RUNTIME DESTINATION bin/plugins/filters

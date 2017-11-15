@@ -16,7 +16,6 @@
 #include "imgproc/basicfilters/FilterBase.h"
 #include "ASAP/PathologyViewer.h"
 
-
 class QSettings;
 class QToolBar;
 class QDockWidget;
@@ -88,6 +87,12 @@ public:
 
   virtual std::string name() = 0;
   void setViewer(PathologyViewer* viewer) { _viewer = viewer; }
+  void setViewer2(PathologyViewer* viewer2,PathologyViewer* viewer3,PathologyViewer* viewer4)
+  {
+      _viewer2=viewer2;
+      _viewer3=viewer3;
+      _viewer4=viewer4;
+  }
   bool active() { return _active; }
   virtual void setActive(bool active) {
     _active = active;
@@ -102,6 +107,9 @@ public:
 
 protected :
   QPointer<PathologyViewer> _viewer;
+  QPointer<PathologyViewer> _viewer2;
+  QPointer<PathologyViewer> _viewer3;
+  QPointer<PathologyViewer> _viewer4;
   QPointer<QAction> _button;
   bool _active;
 };
@@ -111,6 +119,7 @@ public :
   WorkstationExtensionPluginInterface() : _settings(NULL) {}
   virtual ~WorkstationExtensionPluginInterface() {}
   virtual bool initialize(PathologyViewer* viewer) = 0;
+  virtual bool initialize2(PathologyViewer* viewer2,PathologyViewer* viewer3,PathologyViewer* viewer4) = 0;
   virtual QToolBar* getToolBar() { return NULL;}
   virtual QMenu* getMenu() { return NULL; }
   virtual QDockWidget* getDockWidget() { return NULL; }
@@ -119,6 +128,9 @@ public :
 
 protected:
   QPointer<PathologyViewer> _viewer;
+  QPointer<PathologyViewer> _viewer2;
+  QPointer<PathologyViewer> _viewer3;
+  QPointer<PathologyViewer> _viewer4;
   QSettings* _settings;
 
 

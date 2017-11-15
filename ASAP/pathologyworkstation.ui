@@ -41,7 +41,7 @@
      <x>0</x>
      <y>0</y>
      <width>1037</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -93,15 +93,15 @@
    </property>
   </action>
   <action name="actionCreateAnnotationType">
-    <property name="text">
-      <string>Create annotation type</string>
-    </property>
+   <property name="text">
+    <string>Create annotation type</string>
+   </property>
   </action>
-   <action name="actionCreateAnnotationClass">
-     <property name="text">
-       <string>Create annotation class</string>
-     </property>
-   </action>
+  <action name="actionCreateAnnotationClass">
+   <property name="text">
+    <string>Create annotation class</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

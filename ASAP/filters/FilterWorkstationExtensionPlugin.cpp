@@ -19,8 +19,9 @@ FilterWorkstationExtensionPlugin::FilterWorkstationExtensionPlugin() :
   _autoUpdate(false)
 {
   _dockWidget = new FilterDockWidget();
+  _dockWidget->setObjectName("filter");
   _dockWidget->setEnabled(false);
-  _dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+  //_dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   connect(_dockWidget, SIGNAL(requestFilterResultUpdate()), this, SLOT(onFilterResultUpdateRequested()));
   connect(_dockWidget, SIGNAL(requestFilterResultClear()), this, SLOT(onFilterResultClearRequested()));
   connect(_dockWidget, SIGNAL(changeAutoUpdateStatus(bool)), this, SLOT(onAutoUpdateStatusChanged(bool)));
@@ -64,6 +65,14 @@ FilterWorkstationExtensionPlugin::~FilterWorkstationExtensionPlugin() {
 
 bool FilterWorkstationExtensionPlugin::initialize(PathologyViewer* viewer) {
   _viewer = viewer;
+  connect(_viewer, SIGNAL(fieldOfViewChanged(const QRectF&, const unsigned int)), this, SLOT(onFieldOfViewChanged(const QRectF&, const unsigned int)));
+  return true;
+}
+
+bool FilterWorkstationExtensionPlugin::initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4) {
+  _viewer2 = viewer;
+  _viewer3 = viewer3;
+  _viewer4 = viewer4;
   connect(_viewer, SIGNAL(fieldOfViewChanged(const QRectF&, const unsigned int)), this, SLOT(onFieldOfViewChanged(const QRectF&, const unsigned int)));
   return true;
 }

@@ -9,7 +9,10 @@ set(QTNETWORK_LIBS D:/qt/5.9/msvc2013_64/lib)
 
 INCLUDE_DIRECTORIES(
   ${VisualizationPlugin_SOURCE_DIR}/../../
-  ${Boost_INCLUDE_DIRS}
+  ${VisualizationPlugin_SOURCE_DIR}/../
+  ${Boost_INCLUDE_DIR}
+  ${DIAGPathology_BINARY_DIR}
+  ${ASAP_BINARY_DIR}
   ${CORE_BINARY_DIR}
   ${MULTIRESOLUTIONIMAGEINTERFACE_BINARY_DIR}
   ${ANNOTATION_BINARY_DIR}
@@ -45,8 +48,9 @@ ELSE()
   add_library(VisualizationWorkstationExtensionPlugin SHARED ${VisualizationWorkstationExtensionPlugin_SOURCE} ${VISUALIZATION_RESOURCE_ADDED})
   qt5_use_modules(VisualizationWorkstationExtensionPlugin Core Widgets UiTools)
 ENDIF()
-TARGET_LINK_LIBRARIES(VisualizationWorkstationExtensionPlugin ASAP multiresolutionimageinterface core annotation Qt5Network)
+TARGET_LINK_LIBRARIES(VisualizationWorkstationExtensionPlugin ASAP AnnotationPlugin multiresolutionimageinterface core annotation Qt5Network)
 SET_TARGET_PROPERTIES(VisualizationWorkstationExtensionPlugin PROPERTIES DEBUG_POSTFIX _d)
+#SET_TARGET_PROPERTIES(VisualizationWorkstationExtensionPlugin PROPERTIES RELEASE_POSTFIX "")
 
 INSTALL(TARGETS VisualizationWorkstationExtensionPlugin
   RUNTIME DESTINATION bin/plugins/workstationextension

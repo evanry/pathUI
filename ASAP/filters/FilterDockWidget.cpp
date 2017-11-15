@@ -14,7 +14,7 @@
 #include "QtProgressMonitor.h"
 
 FilterDockWidget::FilterDockWidget(QWidget *parent, Qt::WindowFlags flags) : 
-  QDockWidget("Image Filters", parent, flags),
+  QDockWidget(QString::fromLocal8Bit("Í¼Ïñ¹ýÂË"), parent, flags),
   _currentSelection(NULL),
   _availableFilters(NULL),
   _settingsPanel(NULL),

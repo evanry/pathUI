@@ -19,7 +19,8 @@ public:
     DOT,
     POLYGON,
     SPLINE,
-    POINTSET
+    POINTSET,
+    MEASUREMENT
   };
 
   Annotation();
@@ -38,6 +39,7 @@ public:
   Annotation::Type getType() const;
 
   std::string getTypeAsString() const;
+  std::string getTypeAsChinese() const;
   void setTypeFromString(const std::string& type);
 
   std::vector<Point> getImageBoundingBox() const;
@@ -52,6 +54,6 @@ public:
 private:
   Type _type;
 	std::vector<Point> _coordinates;
-  static const char* _typeStrings[5];
+  static const char* _typeStrings[6];
 };
 #endif

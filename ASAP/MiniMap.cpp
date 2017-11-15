@@ -64,10 +64,13 @@ void MiniMap::mouseMoveEvent(QMouseEvent *event) {
 void MiniMap::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   if (!_overview.isNull()) {
-    painter.drawPixmap(1, 1, width(), height(), _overview);
+//      painter.translate(width()/2,height()/2); //让图片的中心作为旋转的中心
+//      painter.rotate(90); //顺时针旋转90度
+//      painter.translate(-width()/2,-height()/2);
+    painter.drawPixmap(1, 1,  width(), height(),_overview);
     painter.setPen(QPen(Qt::white, 2));
     painter.drawRect(1, 1, width() - 2, height() - 2);
-    painter.setPen(QPen(Qt::black, 1));
+    painter.setPen(QPen(Qt::gray, 1));
     painter.drawRect(0, 0, width() - 1, height() - 1);
     if (_manager && _drawCoverageMap) {
       painter.save();

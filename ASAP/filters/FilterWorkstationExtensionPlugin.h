@@ -23,6 +23,7 @@ private :
 
 public :
     bool initialize(PathologyViewer* viewer);
+    bool initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4);
     FilterWorkstationExtensionPlugin();
     ~FilterWorkstationExtensionPlugin();
     QDockWidget* getDockWidget();

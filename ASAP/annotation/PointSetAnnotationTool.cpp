@@ -29,7 +29,7 @@ void PointSetAnnotationTool::mouseDoubleClickEvent(QMouseEvent *event) {
 
 QAction* PointSetAnnotationTool::getToolButton() {
   if (!_button) {
-    _button = new QAction("PointSetAnnotation", this);
+    _button = new QAction(QString::fromLocal8Bit("µã¼¯×¢ÊÍ"), this);
     _button->setObjectName(QString::fromStdString(name()));
     _button->setIcon(QIcon(QPixmap(":/AnnotationWorkstationExtensionPlugin_icons/pointset.png")));
   }

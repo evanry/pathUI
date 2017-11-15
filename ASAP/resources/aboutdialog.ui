@@ -30,7 +30,7 @@
    <item>
     <widget class="QLabel" name="generalInfoLabel">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ASAP @VERSION_STRING@&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Automated slide analysis platform for fast viewing, annotation and analysis of whole slide histopathology images.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Author: Geert Litjens&lt;br/&gt;Homepage: &lt;a href=&quot;https://github.com/geertlitjens/ASAP&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://github.com/geertlitjens/ASAP&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;病理影像分析系统&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Automated slide analysis platform for fast viewing, annotation and analysis of whole slide histopathology images.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;作者: Geert Litjens&lt;br/&gt;主页: &lt;a href=&quot;https://github.com/geertlitjens/ASAP&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://github.com/geertlitjens/ASAP&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -50,17 +50,17 @@
      </property>
      <column>
       <property name="text">
-       <string>Loaded Plugins</string>
+       <string>加载的插件</string>
       </property>
      </column>
      <item>
       <property name="text">
-       <string>Tool</string>
+       <string>工具</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>Workstation Extension</string>
+       <string>工作区域扩展</string>
       </property>
      </item>
     </widget>
