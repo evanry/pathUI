@@ -324,6 +324,23 @@ void VisualizationWorkstationExtensionPlugin::oncloseclicked2(QString ofn){
     cf->setChecked(false);
 }
 
+void VisualizationWorkstationExtensionPlugin::getfns(){
+    QList<QCheckBox*> fls=filelist->findChildren<QCheckBox*>();
+    int num=fls.length();
+    if(num>=2&&num<4){
+        QString f1=fls.at(0)->text();
+        QString f2=fls.at(1)->text();
+        emit retfns2(f1,f2);
+    }
+    else if(num>=4){
+        QString f1=fls.at(0)->text();
+        QString f2=fls.at(1)->text();
+        QString f3=fls.at(2)->text();
+        QString f4=fls.at(3)->text();
+        emit retfns4(f1,f2,f3,f4);
+    }
+}
+
 void VisualizationWorkstationExtensionPlugin::onSendClicked(QString ofn){
 //    if(!fileName.isEmpty()) {
 //        QStringList secs= fileName.split(QRegExp("[/]"));

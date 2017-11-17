@@ -61,7 +61,7 @@ PathologyWorkstation::PathologyWorkstation(QWidget *parent) :
   connect(save, SIGNAL(triggered(bool)), this, SLOT(on_actionsave_triggered()));
   connect(rotate, SIGNAL(triggered(bool)), this, SLOT(on_actionRotate_triggered()));
   connect(info, SIGNAL(triggered(bool)), this, SLOT(on_actionInfo_triggered()));
-  connect(flat, SIGNAL(triggered(bool)), this, SLOT(on_actionflat_triggered()));
+  connect(flat, SIGNAL(triggered()), this, SLOT(on_actionflat_triggered()));
   connect(one, SIGNAL(triggered(bool)), this, SLOT(on_actionone_triggered()));
  // connect(actionSend, SIGNAL(triggered(bool)), this, SLOT(on_actionSend_triggered()));
 
@@ -206,6 +206,9 @@ void PathologyWorkstation::loadPlugins() {
                   connect(this,SIGNAL(closeimg(QString)), &*extension, SLOT(oncloseclicked(QString)));
                   connect(this,SIGNAL(openf(QString)), &*extension, SLOT(oncloseclicked2(QString)));
                   connect(&*extension,SIGNAL(switchimg(QString)),this,SLOT(changeimg(QString)));
+                  connect(this,SIGNAL(getfn()), &*extension, SLOT(getfns()));
+                  connect(&*extension,SIGNAL(retfns2(QString,QString)),this,SLOT(twoview(QString,QString)));
+                  connect(&*extension,SIGNAL(retfns4(QString,QString,QString,QString)),this,SLOT(fourview(QString,QString,QString,QString)));
               }
               if(fileName.toStdString()=="AnnotationPlugin_d.dll")
               {
@@ -384,6 +387,7 @@ void PathologyWorkstation::on_actionClose_triggered2()
 
 void PathologyWorkstation::openFile(const QString& fileName) {
   statusBar->clearMessage();
+
   if (!fileName.isEmpty()) {
     if (_img) {
       QString fpn=_settings->value("lastOpenendPath").toString();
@@ -461,7 +465,10 @@ void PathologyWorkstation::openFile2(const QString& fileName) {
 void PathologyWorkstation::on_actionOpen_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this, QString::fromLocal8Bit("打开文件"), _settings->value("lastOpenendPath", QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString(), QString::fromLocal8Bit("Slide 文件 (*.lif *.svs *.mrxs *.ndpi *.tif *.tiff);;所有文件 (*.*)"));
-    emit fileSend(fileName);
+    //emit fileSend(fileName);
+    if (!fileName.isEmpty()) {
+        emit fileSend(fileName);
+    }
     openFile(fileName);
 
 }
@@ -589,20 +596,60 @@ void PathologyWorkstation::on_actionInfo_triggered(){
 }
 
 void PathologyWorkstation::on_actionflat_triggered(){
-    QString f3("Z:/16/TrainingData/Train_Tumor/Tumor_009.tif");
-    QString f4("Y:/Tumor_055.tif");
-    QString f5("F:/Tumor_076.tif");
-    std::string fn3=f3.toStdString();
+    emit getfn();
+//    QString f3("Z:/16/TrainingData/Train_Tumor/Tumor_009.tif");
+//    QString f4("Y:/Tumor_055.tif");
+//    QString f5("F:/Tumor_076.tif");
+//    std::string fn3=f3.toStdString();
+//    MultiResolutionImageReader imgReader;
+//    _img.reset(imgReader.open(fn3));
+//    std::shared_ptr<MultiResolutionImage> v3;
+//    v3.reset(imgReader.open(f4.toStdString()));
+//    std::shared_ptr<MultiResolutionImage> v4;
+//    v4.reset(imgReader.open(f5.toStdString()));
+//    if (_img) {
+//      if (_img->valid()) {
+//        if (std::shared_ptr<OpenSlideImage> openslide_img = dynamic_pointer_cast<OpenSlideImage>(_img)) {
+//          openslide_img->setIgnoreAlpha(false);
+//        }
+//        if (std::shared_ptr<OpenSlideImage> openslide_img3 = dynamic_pointer_cast<OpenSlideImage>(v3)) {
+//          openslide_img3->setIgnoreAlpha(false);
+//        }
+//        if (std::shared_ptr<OpenSlideImage> openslide_img4 = dynamic_pointer_cast<OpenSlideImage>(v4)) {
+//          openslide_img4->setIgnoreAlpha(false);
+//        }
+//        PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
+//        view2->initialize(_img);
+//        PathologyViewer* view3 = this->findChild<PathologyViewer*>("view3");
+//        view3->initialize(v3);
+//        PathologyViewer* view4 = this->findChild<PathologyViewer*>("view4");
+//        view4->initialize(v4);
+//        view2->setVisible(true);
+//        view3->setVisible(true);
+//        view4->setVisible(true);
+//        }
+//      }
+}
+
+void PathologyWorkstation::fourview(QString f1,QString f2,QString f3,QString f4){
+    std::string fn1=f1.toStdString();
     MultiResolutionImageReader imgReader;
-    _img.reset(imgReader.open(fn3));
+    _img = NULL;
+    _img.reset();
+    _img.reset(imgReader.open(fn1));
+    std::shared_ptr<MultiResolutionImage> v2;
+    v2.reset(imgReader.open(f2.toStdString()));
     std::shared_ptr<MultiResolutionImage> v3;
-    v3.reset(imgReader.open(f4.toStdString()));
+    v3.reset(imgReader.open(f3.toStdString()));
     std::shared_ptr<MultiResolutionImage> v4;
-    v4.reset(imgReader.open(f5.toStdString()));
+    v4.reset(imgReader.open(f4.toStdString()));
     if (_img) {
       if (_img->valid()) {
         if (std::shared_ptr<OpenSlideImage> openslide_img = dynamic_pointer_cast<OpenSlideImage>(_img)) {
           openslide_img->setIgnoreAlpha(false);
+        }
+        if (std::shared_ptr<OpenSlideImage> openslide_img2 = dynamic_pointer_cast<OpenSlideImage>(v2)) {
+          openslide_img2->setIgnoreAlpha(false);
         }
         if (std::shared_ptr<OpenSlideImage> openslide_img3 = dynamic_pointer_cast<OpenSlideImage>(v3)) {
           openslide_img3->setIgnoreAlpha(false);
@@ -610,8 +657,10 @@ void PathologyWorkstation::on_actionflat_triggered(){
         if (std::shared_ptr<OpenSlideImage> openslide_img4 = dynamic_pointer_cast<OpenSlideImage>(v4)) {
           openslide_img4->setIgnoreAlpha(false);
         }
+        PathologyViewer* view1 = this->findChild<PathologyViewer*>("pathologyView");
+        view1->initialize(_img);
         PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
-        view2->initialize(_img);
+        view2->initialize(v2);
         PathologyViewer* view3 = this->findChild<PathologyViewer*>("view3");
         view3->initialize(v3);
         PathologyViewer* view4 = this->findChild<PathologyViewer*>("view4");
@@ -619,8 +668,34 @@ void PathologyWorkstation::on_actionflat_triggered(){
         view2->setVisible(true);
         view3->setVisible(true);
         view4->setVisible(true);
-        }
       }
+    }
+}
+
+void PathologyWorkstation::twoview(QString f1,QString f2){
+    std::string fn1=f1.toStdString();
+    MultiResolutionImageReader imgReader;
+    _img = NULL;
+    _img.reset();
+    _img.reset(imgReader.open(fn1));
+    std::shared_ptr<MultiResolutionImage> v2;
+    v2.reset(imgReader.open(f2.toStdString()));
+    if (_img) {
+      if (_img->valid()) {
+        if (std::shared_ptr<OpenSlideImage> openslide_img = dynamic_pointer_cast<OpenSlideImage>(_img)) {
+          openslide_img->setIgnoreAlpha(false);
+        }
+        if (std::shared_ptr<OpenSlideImage> openslide_img2 = dynamic_pointer_cast<OpenSlideImage>(v2)) {
+          openslide_img2->setIgnoreAlpha(false);
+        }
+        PathologyViewer* view1 = this->findChild<PathologyViewer*>("pathologyView");
+        view1->initialize(_img);
+        PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
+        view2->initialize(v2);
+
+        view2->setVisible(true);
+      }
+    }
 }
 
 void PathologyWorkstation::on_actionone_triggered(){

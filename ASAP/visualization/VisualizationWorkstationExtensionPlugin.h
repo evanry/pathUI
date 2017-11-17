@@ -94,10 +94,13 @@ public slots:
     void sendFileName();
     void readMessageFromTCPServer();
     void displayError(QAbstractSocket::SocketError socketerror);
+    void getfns();
 
 signals: 
     void changeForegroundImage(std::weak_ptr<MultiResolutionImage>, float scale);
     void switchimg(QString);
+    void retfns2(QString,QString);
+    void retfns4(QString,QString,QString,QString);
 };
 
 class processThread : public QThread

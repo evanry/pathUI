@@ -51,6 +51,7 @@ signals:
   void closeimg(const QString&);
   void openf(const QString&);
   void fileSend(const QString&);
+  void getfn();
 
 private slots:
   void on_actionClose_triggered();
@@ -65,6 +66,8 @@ private slots:
   void onrat3();
   void on_actionInfo_triggered();
   void on_actionflat_triggered();
+  void twoview(QString,QString);
+  void fourview(QString,QString,QString,QString);
   void on_actionone_triggered();
   void changeimg(QString);
 
