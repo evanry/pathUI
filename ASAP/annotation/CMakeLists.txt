@@ -29,12 +29,14 @@ SET(ANNOTATION_PLUGIN_HEADERS
   PointSetAnnotationTool.h
   SplineAnnotationTool.h
   MeasurementAnnotationTool.h
+  TextAnnotationTool.h
   QtAnnotation.h
   QtAnnotationGroup.h
   PolyQtAnnotation.h
   PointSetQtAnnotation.h
   DotQtAnnotation.h
   MeasurementQtAnnotation.h
+  TextQtAnnotation.h
   annotationplugin_export.h
 )
 
@@ -45,11 +47,13 @@ SET(ANNOTATION_PLUGIN_SOURCE
   PolyAnnotationTool.cpp
   PointSetAnnotationTool.cpp
   MeasurementAnnotationTool.cpp
+  TextAnnotationTool.cpp
   SplineAnnotationTool.cpp
   QtAnnotation.cpp
   QtAnnotationGroup.cpp
   PolyQtAnnotation.cpp
   MeasurementQtAnnotation.cpp
+  TextQtAnnotation.cpp
   PointSetQtAnnotation.cpp
   DotQtAnnotation.cpp
 )

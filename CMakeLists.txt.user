@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.3.1, 2017-11-17T18:38:45. -->
+<!-- Written by QtCreator 4.3.1, 2017-11-23T13:25:58. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -62,7 +62,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Desktop Qt 5.9.0 MSVC2013 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Desktop Qt 5.9.0 MSVC2013 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.59.win64_msvc2013_64_kit</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">2</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
    <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">6</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
@@ -119,7 +119,14 @@
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.1">
     <valuelist type="QVariantList" key="CMake.Configuration">
+     <value type="QString">BUILD_DIAG_PATHOLOGY_EXECUTABLES:BOOL=ON</value>
+     <value type="QString">BUILD_DIAG_PATHOLOGY_IMAGEPROCESSING:BOOL=ON</value>
+     <value type="QString">BUILD_DIAG_PATHOLOGY_WORKSTATION:BOOL=ON</value>
      <value type="QString">CMAKE_BUILD_TYPE:STRING=Debug</value>
+     <value type="QString">CMAKE_CXX_COMPILER:STRING=%{Compiler:Executable:Cxx}</value>
+     <value type="QString">CMAKE_C_COMPILER:STRING=%{Compiler:Executable:C}</value>
+     <value type="QString">CMAKE_PREFIX_PATH:STRING=%{Qt:QT_INSTALL_PREFIX}</value>
+     <value type="QString">QT_QMAKE_EXECUTABLE:STRING=%{Qt:qmakeExecutable}</value>
     </valuelist>
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
@@ -360,7 +367,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">WSIDistanceTransform</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/WSIDistanceTransform</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/WSIDistanceTransform</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">WSIDistanceTransform</value>
@@ -416,7 +423,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">MultiResImageConverter</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/MultiResImageConverter</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/MultiResImageConverter</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">MultiResImageConverter</value>
@@ -472,7 +479,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">WSIConnectedComponents</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/WSIConnectedComponents</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/WSIConnectedComponents</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">WSIConnectedComponents</value>
@@ -528,7 +535,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">WSIThreshold</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/WSIThreshold</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/WSIThreshold</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">WSIThreshold</value>
@@ -584,7 +591,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">WSIArithmetic</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/WSIArithmetic</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/WSIArithmetic</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">WSIArithmetic</value>
@@ -640,7 +647,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">WSILabelStatistics</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/WSILabelStatistics</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/executables/WSILabelStatistics</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">WSILabelStatistics</value>
@@ -696,7 +703,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">ASAP</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/ASAP</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/download/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Debug/ASAP</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">ASAP</value>
@@ -753,7 +760,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">E:/build-ASAP-1.6-Desktop_Qt_5_9_0_MSVC2013_64bit-Release/executables/TestRunner</value>
-    <value type="int" key="PE.EnvironmentAspect.Base">-1</value>
+    <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">patholTestRunner (disabled)</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>

@@ -3,7 +3,7 @@
 #include "psimpl.h"
 #include <limits>
 
-const char* Annotation::_typeStrings[6] = { "None", "Dot", "Polygon", "Spline", "PointSet","measure"};
+const char* Annotation::_typeStrings[7] = { "None", "Dot", "Polygon", "Spline", "PointSet","measure","text"};
 
 Annotation::Annotation() :
   _type(Annotation::NONE),
@@ -29,7 +29,7 @@ std::string Annotation::getTypeAsChinese() const {
 }
 
 void Annotation::setTypeFromString(const std::string& type) {
-  for (unsigned int i = 0; i < 6; ++i) {
+  for (unsigned int i = 0; i < 7; ++i) {
     if (type == std::string(_typeStrings[i])) {
       _type = (Annotation::Type)i;
     }

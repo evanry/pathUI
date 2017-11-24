@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
-PROJECT(DIAGPathology_release)
-SET(CMAKE_INSTALL_PREFIX E:/DIAGPathology_release)
+PROJECT(DIAGPathology)
+SET(CMAKE_INSTALL_PREFIX E:/DIAGPathology_debug)
 
 SET(CURRENT_MAJOR_VERSION 1)
 SET(CURRENT_MINOR_VERSION 6)
 SET(CURRENT_PATCH_VERSION 0)
 set(ASAP_VERSION ${CURRENT_MAJOR_VERSION}.${CURRENT_MINOR_VERSION}.${CURRENT_PATCH_VERSION})
 
-set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Release)
 
 #include(GenerateExportHeader)
 #set(BOOST_ROOT E:/download/ThirdParty/boost_1_65_0/boost)

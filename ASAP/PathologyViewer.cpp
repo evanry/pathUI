@@ -20,6 +20,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QDialog>
+#include <QTextEdit>
 
 #include "MiniMap.h"
 #include "ScaleBar.h"
@@ -270,7 +271,7 @@ void PathologyViewer::changeActiveTool() {
           QPushButton* b7=new QPushButton(QString::fromLocal8Bit("40±¶"));
           b1->setFixedWidth(95);
 
-          connect(b2, SIGNAL(clicked(bool)), SLOT(zm5()));
+          connect(b2, SIGNAL(clicked(bool)),this, SLOT(zm5()));
           connect(sld,SIGNAL(valueChanged(int)),this,SLOT(zm(int)));
 
           vLay->addWidget(b7);
@@ -285,14 +286,100 @@ void PathologyViewer::changeActiveTool() {
           hLay->addLayout(vLay);
           hLay->addWidget(sld);
           zm->setLayout(hLay);
-          zm->exec();
+          zm->show();
 
       }
+      else if(_activeTool->name()=="ruler"){
+          QDialog *clr=new QDialog();
+          Qt::WindowFlags flags=Qt::Dialog;
+           flags |=Qt::WindowCloseButtonHint;
+          clr->setWindowFlags(flags);
+          clr->setWindowTitle(QString::fromLocal8Bit("»­±ÊÑÕÉ«"));
+          pen.setColor(Qt::black);
+          QVBoxLayout* vLay=new QVBoxLayout();
+          QPushButton* b1=new QPushButton();
+          QPushButton* b2=new QPushButton();
+          QPushButton* b3=new QPushButton();
+          QPushButton* b4=new QPushButton();
+          QPushButton* b5=new QPushButton();
+          QPushButton* b6=new QPushButton();
+          b1->setStyleSheet("border:0px;background-color: rgb(0, 0, 0);");
+          b2->setStyleSheet("border:0px;background-color: rgb(255,255,255);");
+          b3->setStyleSheet("border:0px;background-color: rgb(255, 0, 0);");
+          b4->setStyleSheet("border:0px;background-color: rgb(255, 255, 0);");
+          b5->setStyleSheet("border:0px;background-color: rgb(0, 255, 0);");
+          b6->setStyleSheet("border:0px;background-color: rgb(0, 0, 255);");
+          b1->setFixedSize(70,30);
+          b2->setFixedSize(70,30);
+          b3->setFixedSize(70,30);
+          b4->setFixedSize(70,30);
+          b5->setFixedSize(70,30);
+          b6->setFixedSize(70,30);
+          connect(b1, SIGNAL(clicked(bool)), this,SLOT(blkclr()));
+          connect(b2,SIGNAL(clicked(bool)),this,SLOT(whiteclr()));
+          connect(b3, SIGNAL(clicked(bool)), this,SLOT(redclr()));
+          connect(b4,SIGNAL(clicked(bool)),this,SLOT(yellowclr()));
+          connect(b5, SIGNAL(clicked(bool)),this, SLOT(greenclr()));
+          connect(b6,SIGNAL(clicked(bool)),this,SLOT(blueclr()));
+          vLay->addWidget(b4);
+          vLay->addWidget(b3);
+          vLay->addWidget(b2);
+          vLay->addWidget(b5);
+          vLay->addWidget(b1);
+          vLay->addWidget(b6);
+          clr->setLayout(vLay);
+          clr->show();
+      }
+      else if(_activeTool->name()=="textannotation"){
+          QDialog *zhushi=new QDialog();
+          Qt::WindowFlags flags=Qt::Dialog;
+           flags |=Qt::WindowCloseButtonHint;
+          zhushi->setWindowFlags(flags);
+          zhushi->setWindowTitle(QString::fromLocal8Bit("ÎÄ×Ö×¢ÊÍ"));
+          input=new QTextEdit();
+          QVBoxLayout* vLay=new QVBoxLayout();
+          QPushButton* b1=new QPushButton(QString::fromLocal8Bit("È·¶¨"));
+          b1->setFixedSize(80,35);
+          connect(b1, SIGNAL(clicked(bool)), this,SLOT(gettext()));
+          vLay->addWidget(input);
+          vLay->addWidget(b1);
+          zhushi->setLayout(vLay);
+          zhushi->show();
+      }
     }
+
     else {
       _activeTool = NULL;
     }
   }
+}
+
+void PathologyViewer::gettext(){
+    annotext=input->toPlainText();
+}
+
+void PathologyViewer::blkclr(){
+    pen.setColor(Qt::black);
+}
+
+void PathologyViewer::whiteclr(){
+    pen.setColor(Qt::white);
+}
+
+void PathologyViewer::redclr(){
+    pen.setColor(Qt::red);
+}
+
+void PathologyViewer::blueclr(){
+    pen.setColor(Qt::blue);
+}
+
+void PathologyViewer::greenclr(){
+    pen.setColor(Qt::green);
+}
+
+void PathologyViewer::yellowclr(){
+    pen.setColor(Qt::yellow);
 }
 
 void PathologyViewer::onFieldOfViewChanged(const QRectF& FOV, const unsigned int level) {
@@ -622,9 +709,9 @@ void PathologyViewer::ruler(QPoint &rulerTo)
         actLine->setZValue(std::numeric_limits<float>::max());
         this->scene()->addItem(actLine);
     }
-    QPen pen;
+    //QPen pen;
     pen.setWidthF(0);
-    pen.setColor(Qt::black);
+    //pen.setColor(Qt::black);
     actLine->setPen(pen);
     actLine->setRect(imgLoc1.x(),imgLoc1.y(),imgLoc2.x()-imgLoc1.x(),imgLoc2.y()-imgLoc1.y());
 }

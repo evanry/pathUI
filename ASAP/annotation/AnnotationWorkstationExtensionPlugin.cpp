@@ -4,6 +4,7 @@
 #include "PointSetAnnotationTool.h"
 #include "SplineAnnotationTool.h"
 #include "MeasurementAnnotationTool.h"
+#include "TextAnnotationTool.h"
 #include "AnnotationService.h"
 #include "AnnotationList.h"
 #include "AnnotationGroup.h"
@@ -15,6 +16,7 @@
 #include "DotQtAnnotation.h"
 #include "PolyQtAnnotation.h"
 #include "MeasurementQtAnnotation.h"
+#include "TextQtAnnotation.h"
 #include "PointSetQtAnnotation.h"
 #include "io/multiresolutionimageinterface/MultiResolutionImage.h"
 #include "../PathologyViewer.h"
@@ -420,6 +422,9 @@ void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string
       else if ((*it)->getType() == Annotation::Type::MEASUREMENT) {
         annot = new MeasurementQtAnnotation((*it), this, _viewer->getSceneScale());
       }
+      else if ((*it)->getType() == (Annotation::Type)6) {
+        annot = new TextQtAnnotation(_viewer,(*it), this, _viewer->getSceneScale());
+      }
       else if ((*it)->getType() == Annotation::Type::POINTSET) {
         annot = new PointSetQtAnnotation((*it), this, _viewer->getSceneScale());
       }
@@ -446,6 +451,9 @@ void AnnotationWorkstationExtensionPlugin::onLoadButtonPressed(const std::string
         }
         else if(typestr=="measure"){
           newAnnotation->setText(2, QString::fromLocal8Bit("测量"));
+        }
+        else if(typestr=="text"){
+          newAnnotation->setText(2, QString::fromLocal8Bit("文字"));
         }
         else if(typestr=="PointSet"){
           newAnnotation->setText(2, QString::fromLocal8Bit("点集"));
@@ -864,6 +872,8 @@ bool AnnotationWorkstationExtensionPlugin::initialize(PathologyViewer* viewer) {
   _annotationTools.push_back(tool);
   tool.reset(new MeasurementAnnotationTool(this, viewer));
   _annotationTools.push_back(tool);
+  tool.reset(new TextAnnotationTool(this, viewer));
+  _annotationTools.push_back(tool);
   _annotationService.reset(new AnnotationService());
   return true;
 }
@@ -918,6 +928,11 @@ void AnnotationWorkstationExtensionPlugin::startAnnotation(float x, float y, con
   else if (type == "measurementannotation") {
     annot->setType(Annotation::Type::MEASUREMENT);
     MeasurementQtAnnotation* temp = new MeasurementQtAnnotation(annot, this, _viewer->getSceneScale());
+    _generatedAnnotation = temp;
+  }
+  else if (type == "textannotation") {
+    annot->setType((Annotation::Type)6);
+    TextQtAnnotation* temp = new TextQtAnnotation(_viewer,annot, this, _viewer->getSceneScale());
     _generatedAnnotation = temp;
   }
   else {
@@ -979,6 +994,9 @@ void AnnotationWorkstationExtensionPlugin::finishAnnotation(bool cancel) {
       }
       else if(typestr=="measure"){
         newAnnotation->setText(2, QString::fromLocal8Bit("测量"));
+      }
+      else if(typestr=="text"){
+        newAnnotation->setText(2, QString::fromLocal8Bit("文字"));
       }
       else if(typestr=="PointSet"){
         newAnnotation->setText(2, QString::fromLocal8Bit("点集"));

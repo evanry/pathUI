@@ -14,6 +14,8 @@ class WSITileGraphicsItemCache;
 class TileManager;
 class ScaleBar;
 class QSettings;
+class QPen;
+class QTextEdit;
 
 class ASAP_EXPORT PathologyViewer : public QGraphicsView
 {
@@ -52,6 +54,9 @@ public:
     int prezm=0;
     //QGraphicsLineItem *actLine;
     QGraphicsRectItem *actLine;
+    QPen pen;
+    QTextEdit *input;
+    QString annotext;
     //void paintEvent(QPaintEvent *);
 
     void zoom(float numSteps);
@@ -80,6 +85,13 @@ public slots :
     void onForegroundImageChanged(std::weak_ptr<MultiResolutionImage> for_img, float scale);
     void zm5();
     void zm(int);
+    void blkclr();
+    void greenclr();
+    void redclr();
+    void yellowclr();
+    void blueclr();
+    void whiteclr();
+    void gettext();
 
 private :
     

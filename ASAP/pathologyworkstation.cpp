@@ -159,7 +159,7 @@ void PathologyWorkstation::loadPlugins() {
               tool->setViewer(viewer);
               tool->setViewer2(viewer2,viewer3,viewer4);
               QAction* toolAction = tool->getToolButton();
-              if(tool->name()=="zoom"){
+              if(tool->name()=="zoom"||tool->name()=="ruler"){
                   connect(toolAction, SIGNAL(triggered(bool)), viewer, SLOT(changeActiveTool()));
               }
               else{
@@ -200,7 +200,7 @@ void PathologyWorkstation::loadPlugins() {
               _extensionPluginFileNames.push_back(fileName.toStdString());
               connect(this, SIGNAL(newImageLoaded(std::weak_ptr<MultiResolutionImage>, std::string)), &*extension, SLOT(onNewImageLoaded(std::weak_ptr<MultiResolutionImage>, std::string)));
               connect(this, SIGNAL(imageClosed()), &*extension, SLOT(onImageClosed()));
-              if(fileName.toStdString()=="VisualizationWorkstationExtensionPlugin.dll")
+              if(fileName.toStdString()=="VisualizationWorkstationExtensionPlugin.dll"||fileName.toStdString()=="VisualizationWorkstationExtensionPlugin_d.dll")
               {
                   connect(this,SIGNAL(fileSend(QString)), &*extension, SLOT(onSendClicked(QString)));
                   connect(this,SIGNAL(closeimg(QString)), &*extension, SLOT(oncloseclicked(QString)));
@@ -782,9 +782,9 @@ void PathologyWorkstation::setupUi()
   rotate->setIcon(QIcon(QPixmap(":/ASAP_icons/rotate.png")));
   rotate->setIconText(QString::fromLocal8Bit("旋转"));
   info=new QAction(this);
-  info->setText(QString::fromLocal8Bit("图像信息"));
+  info->setText(QString::fromLocal8Bit("文件信息"));
   info->setIcon(QIcon(QPixmap(":/ASAP_icons/info.png")));
-  info->setIconText(QString::fromLocal8Bit("图像信息"));
+  info->setIconText(QString::fromLocal8Bit("文件信息"));
   flat=new QAction(this);
   flat->setText(QString::fromLocal8Bit("多窗口显示"));
   flat->setIcon(QIcon(QPixmap(":/ASAP_icons/flat.png")));
