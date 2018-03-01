@@ -18,7 +18,7 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>380</width>
+    <width>580</width>
     <height>700</height>
    </size>
   </property>
@@ -54,8 +54,8 @@ QLabel {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>440</width>
-     <height>679</height>
+     <width>376</width>
+     <height>700</height>
     </rect>
    </property>
    <property name="sizePolicy">

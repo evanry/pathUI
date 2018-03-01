@@ -12,6 +12,7 @@
         <file alias="inactive_freehand.xpm">inactive_freehand.xpm</file>
         <file alias="inactive_spline.xpm">inactive_spline.xpm</file>
         <file alias="inactive_xml.xpm">xml.xpm</file>
+        <file>wenzi.png</file>
     </qresource>
     <qresource prefix="/AnnotationWorkstationExtensionPlugin_ui">
         <file>AnnotationDockWidget.ui</file>

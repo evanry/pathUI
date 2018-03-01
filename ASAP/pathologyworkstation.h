@@ -52,6 +52,9 @@ signals:
   void openf(const QString&);
   void fileSend(const QString&);
   void getfn();
+  void canzoom(QWheelEvent*);
+  void canpan(QPoint ,QPoint);
+  void xmltomask(const QString&);
 
 private slots:
   void on_actionClose_triggered();
@@ -61,6 +64,7 @@ private slots:
   void on_actionsave_triggered();
   void on_actionConnect_triggered();
   void on_actionRotate_triggered();
+  void on_mask_triggered();
   void onrat();
   void onrat2();
   void onrat3();
@@ -70,12 +74,16 @@ private slots:
   void fourview(QString,QString,QString,QString);
   void on_actionone_triggered();
   void changeimg(QString);
+  void v2zoom(QWheelEvent*);
+  void v2pan(QPoint ,QPoint);
 
 private:
   static const char* sharedLibraryExtensions;
   std::shared_ptr<MultiResolutionImage> _img;
   unsigned long long _cacheMaxByteSize;
   QSettings* _settings;
+  bool v2opzm=true;
+  bool v2oppan=true;
 
   void closeEvent(QCloseEvent *event);
   
@@ -94,6 +102,7 @@ private:
   QAction *info;
   QAction *flat;
   QAction *one;
+  QAction *tomask;
   //QAction *actionSend;
   QAction *actionAbout;
   QActionGroup *_toolActions;

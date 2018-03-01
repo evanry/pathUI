@@ -154,7 +154,7 @@ void AnnotationWorkstationExtensionPlugin::clearAnnotationList() {
 void AnnotationWorkstationExtensionPlugin::clearQtAnnotations() {
   for (QList<QtAnnotation*>::iterator it = _qtAnnotations.begin(); it != _qtAnnotations.end(); ++it) {
     _viewer->scene()->removeItem(*it);
-    _viewer2->scene()->removeItem(*it);
+    //_viewer2->scene()->removeItem(*it);
     (*it)->deleteLater();
   }
   _qtAnnotations.clear();
@@ -703,6 +703,83 @@ bool AnnotationWorkstationExtensionPlugin::onSaveButtonPressed() {
   return false;
 }
 
+void AnnotationWorkstationExtensionPlugin::onSaveButtonPressed3(const QString& fileName1) {
+
+  //QString fileName=fnlist[0]+"_mask.tif";
+    QStringList fnlist2= fileName1.split('/');
+    QString fn=fnlist2[4];
+    QStringList fnlist= fn.split('.');
+    QString fileName="F:\\"+fnlist[0]+"_mask.tif";
+    //QString fileName="F:\\tt_mask.tif";
+  if (fileName.endsWith(".tif")) {
+    if (std::shared_ptr<MultiResolutionImage> local_img = _img.lock()) {
+      std::vector<std::shared_ptr<AnnotationGroup> > grps = this->_annotationService->getList()->getGroups();
+      QDialog* nameToLabel = new QDialog();
+      nameToLabel->setWindowTitle(QString::fromLocal8Bit("为注释组指定标签"));
+      QVBoxLayout* dialogLayout = new QVBoxLayout();
+      QFormLayout* nameToLabelLayout = new QFormLayout();
+      QHBoxLayout* buttonLayout = new QHBoxLayout();
+      if (grps.empty()) {
+        QSpinBox* label = new QSpinBox();
+        label->setMinimum(0);
+        label->setValue(1);
+        label->setObjectName("All annotations");
+        nameToLabelLayout->addRow(QString::fromLocal8Bit("所有注释"), label);
+      }
+      else {
+        for (unsigned int i = 0; i < grps.size(); ++i) {
+          if (!grps[i]->getGroup()) {
+            QSpinBox* label = new QSpinBox();
+            QString grpName = QString::fromStdString(grps[i]->getName());
+            label->setObjectName(grpName);
+            label->setMinimum(0);
+            label->setValue(i + 1);
+            nameToLabelLayout->addRow(grpName, label);
+          }
+        }
+      }
+      dialogLayout->addLayout(nameToLabelLayout);
+      QPushButton* cancel = new QPushButton(QString::fromLocal8Bit("取消"));
+      QPushButton* ok = new QPushButton(QString::fromLocal8Bit("确定"));
+      cancel->setDefault(true);
+      connect(cancel, SIGNAL(clicked()), nameToLabel, SLOT(reject()));
+      connect(ok, SIGNAL(clicked()), nameToLabel, SLOT(accept()));
+      buttonLayout->addWidget(cancel);
+      buttonLayout->addWidget(ok);
+      dialogLayout->addLayout(buttonLayout);
+      nameToLabel->setLayout(dialogLayout);
+      int rval = nameToLabel->exec();
+      if (rval) {
+        QList<QSpinBox*> assignedLabels = nameToLabel->findChildren<QSpinBox*>();
+        std::map<std::string, int> nameToLab;
+        for (QList<QSpinBox*>::iterator it = assignedLabels.begin(); it != assignedLabels.end(); ++it) {
+          if ((*it)->objectName().toStdString() == "All annotations") {
+            continue;
+          }
+          nameToLab[(*it)->objectName().toStdString()] = (*it)->value();
+        }
+        AnnotationToMask maskConverter;
+        QtProgressMonitor monitor;
+        maskConverter.setProgressMonitor(&monitor);
+        QProgressDialog progressDialog;
+        QObject::connect(&monitor, SIGNAL(progressChanged(int)), &progressDialog, SLOT(setValue(int)));
+        progressDialog.setWindowTitle(QString::fromLocal8Bit("病理影像分析系统"));
+        progressDialog.setMinimum(0);
+        progressDialog.setMaximum(100);
+        progressDialog.setCancelButton(NULL);
+        progressDialog.setWindowModality(Qt::WindowModal);
+        progressDialog.setValue(0);
+        progressDialog.show();
+        QApplication::processEvents();
+        maskConverter.convert(_annotationService->getList(), fileName.toStdString(), local_img->getDimensions(), local_img->getSpacing(), nameToLab);
+        delete nameToLabel;
+      }
+    }
+
+  }
+
+}
+
 bool AnnotationWorkstationExtensionPlugin::eventFilter(QObject* watched, QEvent* event) {
   
   if (qobject_cast<QWidget*>(watched) == _treeWidget->viewport()) {
@@ -878,18 +955,18 @@ bool AnnotationWorkstationExtensionPlugin::initialize(PathologyViewer* viewer) {
   return true;
 }
 
-bool AnnotationWorkstationExtensionPlugin::initialize2(PathologyViewer* viewer,PathologyViewer* viewer3,PathologyViewer* viewer4) {
-  _viewer2 = viewer;
+bool AnnotationWorkstationExtensionPlugin::initialize2(PathologyViewer* viewer2,PathologyViewer* viewer3,PathologyViewer* viewer4) {
+  _viewer2 = viewer2;
   _viewer3 = viewer3;
   _viewer4 = viewer4;
-//  std::shared_ptr<ToolPluginInterface> tool(new DotAnnotationTool(this, viewer));
-//  _annotationTools.push_back(tool);
-//  tool.reset(new PolyAnnotationTool(this, viewer));
-//  _annotationTools.push_back(tool);
-//  tool.reset(new SplineAnnotationTool(this, viewer));
-//  _annotationTools.push_back(tool);
-//  tool.reset(new PointSetAnnotationTool(this, viewer));
-//  _annotationTools.push_back(tool);
+  std::shared_ptr<ToolPluginInterface> tool(new DotAnnotationTool(this, _viewer2));
+ // _annotationTools.push_back(tool);
+  tool.reset(new PolyAnnotationTool(this, _viewer2));
+ // _annotationTools.push_back(tool);
+  tool.reset(new SplineAnnotationTool(this, _viewer2));
+ // _annotationTools.push_back(tool);
+  tool.reset(new PointSetAnnotationTool(this, _viewer2));
+ // _annotationTools.push_back(tool);
   _annotationService.reset(new AnnotationService());
   return true;
 }
@@ -941,6 +1018,56 @@ void AnnotationWorkstationExtensionPlugin::startAnnotation(float x, float y, con
   if (_generatedAnnotation) {
     _treeWidget->clearSelection();
     _viewer->scene()->addItem(_generatedAnnotation);
+//    _viewer2->scene()->addItem(_generatedAnnotation);
+    _generatedAnnotation->setZValue(20.);
+    updateGeneratingAnnotationLabel(_generatedAnnotation);
+    connect(_generatedAnnotation, SIGNAL(annotationChanged(QtAnnotation*)), this, SLOT(updateGeneratingAnnotationLabel(QtAnnotation*)));
+  }
+}
+
+void AnnotationWorkstationExtensionPlugin::startAnnotation2(float x, float y, const std::string& type) {
+ // if (_generatedAnnotation) {
+ //   return;
+ // }
+  std::shared_ptr<Annotation> annot = std::make_shared<Annotation>();
+  annot->addCoordinate(x / _viewer2->getSceneScale(), y / _viewer2->getSceneScale());
+  if (type == "dotannotation") {
+    annot->setType(Annotation::Type::DOT);
+    _generatedAnnotation = new DotQtAnnotation(annot, this, _viewer2->getSceneScale());
+  }
+  else if (type == "polyannotation") {
+    annot->setType(Annotation::Type::POLYGON);
+    PolyQtAnnotation* temp = new PolyQtAnnotation(annot, this, _viewer2->getSceneScale());
+    temp->setInterpolationType("linear");
+    _generatedAnnotation = temp;
+  }
+  else if (type == "splineannotation") {
+    annot->setType(Annotation::Type::SPLINE);
+    PolyQtAnnotation* temp = new PolyQtAnnotation(annot, this, _viewer2->getSceneScale());
+    temp->setInterpolationType("spline");
+    _generatedAnnotation = temp;
+  }
+  else if (type == "pointsetannotation") {
+    annot->setType(Annotation::Type::POINTSET);
+    PointSetQtAnnotation* temp = new PointSetQtAnnotation(annot, this, _viewer2->getSceneScale());
+    _generatedAnnotation = temp;
+  }
+  else if (type == "measurementannotation") {
+    annot->setType(Annotation::Type::MEASUREMENT);
+    MeasurementQtAnnotation* temp = new MeasurementQtAnnotation(annot, this, _viewer2->getSceneScale());
+    _generatedAnnotation = temp;
+  }
+  else if (type == "textannotation") {
+    annot->setType((Annotation::Type)6);
+    TextQtAnnotation* temp = new TextQtAnnotation(_viewer2,annot, this, _viewer2->getSceneScale());
+    _generatedAnnotation = temp;
+  }
+  else {
+    return;
+  }
+  if (_generatedAnnotation) {
+    _treeWidget->clearSelection();
+    _viewer2->scene()->addItem(_generatedAnnotation);
     _generatedAnnotation->setZValue(20.);
     updateGeneratingAnnotationLabel(_generatedAnnotation);
     connect(_generatedAnnotation, SIGNAL(annotationChanged(QtAnnotation*)), this, SLOT(updateGeneratingAnnotationLabel(QtAnnotation*)));

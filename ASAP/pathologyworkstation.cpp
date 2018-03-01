@@ -50,7 +50,9 @@ using namespace std;
 PathologyWorkstation::PathologyWorkstation(QWidget *parent) :
     QMainWindow(parent),
     _cacheMaxByteSize(1000*512*512*3),
-    _settings(NULL)
+    _settings(NULL),
+    v2oppan(false),
+    v2opzm(false)
 {
   setupUi();
   retranslateUi();
@@ -61,15 +63,20 @@ PathologyWorkstation::PathologyWorkstation(QWidget *parent) :
   connect(save, SIGNAL(triggered(bool)), this, SLOT(on_actionsave_triggered()));
   connect(rotate, SIGNAL(triggered(bool)), this, SLOT(on_actionRotate_triggered()));
   connect(info, SIGNAL(triggered(bool)), this, SLOT(on_actionInfo_triggered()));
-  connect(flat, SIGNAL(triggered()), this, SLOT(on_actionflat_triggered()));
+  connect(flat, SIGNAL(triggered(bool)), this, SLOT(on_actionflat_triggered()));
   connect(one, SIGNAL(triggered(bool)), this, SLOT(on_actionone_triggered()));
+
+  connect(tomask, SIGNAL(triggered(bool)), this, SLOT(on_mask_triggered()));
  // connect(actionSend, SIGNAL(triggered(bool)), this, SLOT(on_actionSend_triggered()));
 
   PathologyViewer* view = this->findChild<PathologyViewer*>("pathologyView");
   PathologyViewer* view_2 = this->findChild<PathologyViewer*>("view2");
   PathologyViewer* view_3 = this->findChild<PathologyViewer*>("view3");
   PathologyViewer* view_4 = this->findChild<PathologyViewer*>("view4");
-
+  connect(view,SIGNAL(wheel2(QWheelEvent*)),this,SLOT(v2zoom(QWheelEvent*)));
+  connect(view,SIGNAL(pan2(QPoint ,QPoint)),this,SLOT(v2pan(QPoint ,QPoint)));
+  connect(this,SIGNAL(canzoom(QWheelEvent*)),view_2,SLOT(zoom2(QWheelEvent*)));
+  connect(this,SIGNAL(canpan(QPoint ,QPoint)),view_2,SLOT(panv2(QPoint ,QPoint)));
   this->loadPlugins();
   view->setCacheSize(_cacheMaxByteSize);
   view_2->setCacheSize(_cacheMaxByteSize);
@@ -213,6 +220,7 @@ void PathologyWorkstation::loadPlugins() {
               if(fileName.toStdString()=="AnnotationPlugin_d.dll")
               {
                   connect(this,SIGNAL(newImageLoaded2(std::weak_ptr<MultiResolutionImage>, std::string)), &*extension, SLOT(onNewImageLoaded2(std::weak_ptr<MultiResolutionImage>, std::string)));
+                  connect(this,SIGNAL(xmltomask(QString)),&*extension, SLOT(onSaveButtonPressed3(QString)));
               }
               extension->initialize(viewer);
               extension->initialize2(viewer2,viewer3,viewer4);
@@ -257,7 +265,9 @@ void PathologyWorkstation::loadPlugins() {
                   connect(toolAction, SIGNAL(triggered(bool)), viewer3, SLOT(changeActiveTool()));
                   connect(toolAction, SIGNAL(triggered(bool)), viewer4, SLOT(changeActiveTool()));
                   viewer->addTool(tools[i]);
-                  //viewer2->addTool(tools[i]);
+                  viewer2->addTool(tools[i]);
+                  viewer3->addTool(tools[i]);
+                  viewer4->addTool(tools[i]);
                   mainToolBar->addAction(toolAction);
                   menuTool->addAction(toolAction);
                   toolAction->setCheckable(true);
@@ -351,7 +361,7 @@ void PathologyWorkstation::on_actionClose_triggered()
           PathologyViewer* view_4 = this->findChild<PathologyViewer*>("view4");
           view_4->close();
           view_4->setVisible(false);
-          _img = NULL;
+         // _img = NULL;
 		  _img.reset();
           statusBar->showMessage(QString::fromLocal8Bit("关闭文件!"), 5);
     }
@@ -379,7 +389,7 @@ void PathologyWorkstation::on_actionClose_triggered2()
 //          PathologyViewer* view_4 = this->findChild<PathologyViewer*>("view4");
 //          view_4->close();
 //          view_4->setVisible(false);
-          _img = NULL;
+         // _img = NULL;
           _img.reset();
           statusBar->showMessage(QString::fromLocal8Bit("关闭文件!"), 5);
     }
@@ -596,39 +606,9 @@ void PathologyWorkstation::on_actionInfo_triggered(){
 }
 
 void PathologyWorkstation::on_actionflat_triggered(){
+    PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
+    view2->setVisible(true);
     emit getfn();
-//    QString f3("Z:/16/TrainingData/Train_Tumor/Tumor_009.tif");
-//    QString f4("Y:/Tumor_055.tif");
-//    QString f5("F:/Tumor_076.tif");
-//    std::string fn3=f3.toStdString();
-//    MultiResolutionImageReader imgReader;
-//    _img.reset(imgReader.open(fn3));
-//    std::shared_ptr<MultiResolutionImage> v3;
-//    v3.reset(imgReader.open(f4.toStdString()));
-//    std::shared_ptr<MultiResolutionImage> v4;
-//    v4.reset(imgReader.open(f5.toStdString()));
-//    if (_img) {
-//      if (_img->valid()) {
-//        if (std::shared_ptr<OpenSlideImage> openslide_img = dynamic_pointer_cast<OpenSlideImage>(_img)) {
-//          openslide_img->setIgnoreAlpha(false);
-//        }
-//        if (std::shared_ptr<OpenSlideImage> openslide_img3 = dynamic_pointer_cast<OpenSlideImage>(v3)) {
-//          openslide_img3->setIgnoreAlpha(false);
-//        }
-//        if (std::shared_ptr<OpenSlideImage> openslide_img4 = dynamic_pointer_cast<OpenSlideImage>(v4)) {
-//          openslide_img4->setIgnoreAlpha(false);
-//        }
-//        PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
-//        view2->initialize(_img);
-//        PathologyViewer* view3 = this->findChild<PathologyViewer*>("view3");
-//        view3->initialize(v3);
-//        PathologyViewer* view4 = this->findChild<PathologyViewer*>("view4");
-//        view4->initialize(v4);
-//        view2->setVisible(true);
-//        view3->setVisible(true);
-//        view4->setVisible(true);
-//        }
-//      }
 }
 
 void PathologyWorkstation::fourview(QString f1,QString f2,QString f3,QString f4){
@@ -644,7 +624,7 @@ void PathologyWorkstation::fourview(QString f1,QString f2,QString f3,QString f4)
     std::shared_ptr<MultiResolutionImage> v4;
     v4.reset(imgReader.open(f4.toStdString()));
     if (_img) {
-      if (_img->valid()) {
+      if (_img->valid()&&v2->valid()) {
         if (std::shared_ptr<OpenSlideImage> openslide_img = dynamic_pointer_cast<OpenSlideImage>(_img)) {
           openslide_img->setIgnoreAlpha(false);
         }
@@ -661,6 +641,8 @@ void PathologyWorkstation::fourview(QString f1,QString f2,QString f3,QString f4)
         view1->initialize(_img);
         PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
         view2->initialize(v2);
+        v2oppan=true;
+        v2opzm=true;
         PathologyViewer* view3 = this->findChild<PathologyViewer*>("view3");
         view3->initialize(v3);
         PathologyViewer* view4 = this->findChild<PathologyViewer*>("view4");
@@ -692,10 +674,21 @@ void PathologyWorkstation::twoview(QString f1,QString f2){
         view1->initialize(_img);
         PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
         view2->initialize(v2);
-
         view2->setVisible(true);
+        v2oppan=true;
+        v2opzm=true;
       }
     }
+}
+
+void PathologyWorkstation::v2pan(QPoint pre, QPoint pto){
+    PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
+    if(v2oppan) emit canpan(pre,pto);
+}
+
+void PathologyWorkstation::v2zoom(QWheelEvent* event){
+    PathologyViewer* view2 = this->findChild<PathologyViewer*>("view2");
+    if(v2opzm) emit canzoom(event);
 }
 
 void PathologyWorkstation::on_actionone_triggered(){
@@ -705,9 +698,27 @@ void PathologyWorkstation::on_actionone_triggered(){
     view2->close();
     view3->close();
     view4->close();
+    v2oppan=false;
+    v2opzm=false;
     view2->setVisible(false);
     view3->setVisible(false);
     view4->setVisible(false);
+}
+
+void PathologyWorkstation::on_mask_triggered(){
+    QString fl_path="Z:/17/patient/patient_103";
+    QDir fdir(fl_path);
+    QFileInfoList flist=fdir.entryInfoList();
+    int i=flist.size();
+    for(int j=0;j<i;j++){
+        QFileInfo pfl=flist.at(j);
+        QString flnm=pfl.filePath();
+        //int len=flnm.length();
+        if(flnm.contains(".tif")){
+            openFile(flnm);
+            emit xmltomask(flnm);
+        }
+    }
 }
 
 void PathologyWorkstation::setCacheSize(const unsigned long long& cacheMaxByteSize) {
@@ -797,6 +808,9 @@ void PathologyWorkstation::setupUi()
 //  actionSend->setObjectName(QStringLiteral("actionSend"));
 //  actionSend->setIcon(QIcon(QPixmap(":/ASAP_icons/open.png")));
 
+  tomask=new QAction(this);
+  tomask->setIcon(QIcon(QPixmap(":/ASAP_icons/flat.png")));
+
   actionAbout = new QAction(this);
   actionAbout->setObjectName(QStringLiteral("actionAbout"));
   menuBar = new QMenuBar(this);
@@ -827,6 +841,7 @@ void PathologyWorkstation::setupUi()
   mainToolBar->addAction(flat);
   mainToolBar->addAction(rotate);
   mainToolBar->addAction(info);
+  mainToolBar->addAction(tomask);
 
 //  mainToolBar->addAction(actionSend);
 //  mainToolBar->addSeparator();
@@ -887,6 +902,11 @@ void PathologyWorkstation::setupUi()
   view2->setVisible(false);
   view3->setVisible(false);
   view4->setVisible(false);
+  sizePolicy.setHorizontalStretch(1);
+  pathologyView->setSizePolicy(sizePolicy);
+  view2->setSizePolicy(sizePolicy);
+  view3->setSizePolicy(sizePolicy);
+  view4->setSizePolicy(sizePolicy);
   verticalLayout_3->addLayout(horizontalLayout_2);
   verticalLayout_3->addLayout(horizontalLayout_3);
   this->setCentralWidget(centralWidget);

@@ -77,6 +77,8 @@ signals :
     void fieldOfViewChanged(const QRectF& FOV, const unsigned int level);
     void updateBBox(const QRectF& FOV);
     void backgroundChannelChanged(int channelNr);
+    void wheel2(QWheelEvent *event);
+    void pan2(QPoint ,QPoint);
 
 public slots :
     void moveTo(const QPointF& pos);
@@ -92,6 +94,8 @@ public slots :
     void blueclr();
     void whiteclr();
     void gettext();
+    void zoom2(QWheelEvent *event);
+    void panv2(QPoint ,QPoint);
 
 private :
     

@@ -89,7 +89,7 @@ QAction* TextAnnotationTool::getToolButton() {
   if (!_button) {
     _button = new QAction(QString::fromLocal8Bit("ÎÄ×Ö×¢ÊÍ"), this);
     _button->setObjectName(QString::fromStdString(name()));
-    _button->setIcon(QIcon(QPixmap(":/AnnotationWorkstationExtensionPlugin_icons/measure.png")));
+    _button->setIcon(QIcon(QPixmap(":/AnnotationWorkstationExtensionPlugin_icons/wenzi.png")));
   }
   return _button;
 }

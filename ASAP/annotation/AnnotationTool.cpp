@@ -196,15 +196,36 @@ void AnnotationTool::mousePressEvent(QMouseEvent *event) {
       }
       else {
         _annotationPlugin->startAnnotation(scenePos.x(), scenePos.y(), name());
+        _annotationPlugin->startAnnotation2(scenePos.x(), scenePos.y(), name());
         _generating = true;
         _start = Point(scenePos.x(), scenePos.y());
         _last = _start;
+
       }
     }
     else if (_generating) {
       addCoordinate(scenePos);
     }
     event->accept();
+    }
+
+  if (_viewer2) {
+    QRect viewer2rect=QRect(_viewer2->pos(),_viewer2->size());
+    if (viewer2rect.contains(event->pos()))
+    {
+    QPointF scenePos = _viewer2->mapToScene(event->pos());
+    if (!_generating) {
+        _annotationPlugin->startAnnotation(scenePos.x(), scenePos.y(), name());
+        _generating = true;
+        _start = Point(scenePos.x(), scenePos.y());
+        _last = _start;
+
+    }
+    else if (_generating) {
+      addCoordinate(scenePos);
+    }
+    event->accept();
+    }
   }
 }
 

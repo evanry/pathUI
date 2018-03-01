@@ -56,6 +56,7 @@ private :
   QProgressBar* progress;
   QLabel* fName;
   QString f_name;
+  QString full_fn;
   QString qfilename;
   QVBoxLayout* verpro;
   QVBoxLayout* openedfile;
@@ -75,14 +76,14 @@ public :
 
 public slots:
     void onNewImageLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
-    void onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName);
+    void onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName,QString fln2);
     void onImageClosed();
     void onEnableLikelihoodToggled(bool toggled);
     void onOpacityChanged(double opacity);
     void onEnableSegmentationToggled(bool toggled);
     void onOpenResultImageClicked();
     void onBeginClicked();
-    void onShowClicked(QString fn_);
+    void onShowClicked(QString fn_,QString fn2_);
     void onSendClicked(QString fileName);
     void oncloseclicked(QString fileName);
     void oncloseclicked2(QString fileName);
@@ -95,6 +96,7 @@ public slots:
     void readMessageFromTCPServer();
     void displayError(QAbstractSocket::SocketError socketerror);
     void getfns();
+    void showinfo(QString);
 
 signals: 
     void changeForegroundImage(std::weak_ptr<MultiResolutionImage>, float scale);
@@ -125,7 +127,8 @@ public slots:
 
 signals:
     void valChanged(int);
-    void xmldone(QString);
+    void xmldone(QString,QString);
+    void wronginfo(QString);
 };
 
 

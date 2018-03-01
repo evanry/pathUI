@@ -149,7 +149,16 @@ void PathologyViewer::wheelEvent(QWheelEvent *event) {
   int numSteps = numDegrees / 15;  // see QWheelEvent documentation
   _zoomToScenePos = this->mapToScene(event->pos());
   _zoomToViewPos = event->pos();
+  emit wheel2(event);
   zoom(numSteps);
+}
+
+void PathologyViewer::zoom2(QWheelEvent *event){
+    int numDegrees = event->delta() / 8;
+    int numSteps = numDegrees / 15;  // see QWheelEvent documentation
+    _zoomToScenePos = this->mapToScene(event->pos());
+    _zoomToViewPos = event->pos();
+    zoom(numSteps);
 }
 
 void PathologyViewer::zoom(float numSteps) {
@@ -674,6 +683,21 @@ void PathologyViewer::togglePan(bool pan, const QPoint& startPos) {
 }
 
 void PathologyViewer::pan(const QPoint& panTo) {
+    emit pan2(_prevPan, panTo);
+  QScrollBar *hBar = horizontalScrollBar();
+  QScrollBar *vBar = verticalScrollBar();
+  QPoint delta = panTo - _prevPan;
+  _prevPan = panTo;
+  hBar->setValue(hBar->value() + (isRightToLeft() ? delta.x() : -delta.x()));
+  vBar->setValue(vBar->value() - delta.y());
+  float maxDownsample = 1. / this->_sceneScale;
+  QRectF FOV = this->mapToScene(this->rect()).boundingRect();
+  QRectF FOVImage = QRectF(FOV.left() / this->_sceneScale, FOV.top() / this->_sceneScale, FOV.width() / this->_sceneScale, FOV.height() / this->_sceneScale);
+  emit fieldOfViewChanged(FOVImage, _img->getBestLevelForDownSample(maxDownsample / this->transform().m11()));
+  emit updateBBox(FOV);
+}
+
+void PathologyViewer::panv2(QPoint _prevPan, QPoint panTo) {
   QScrollBar *hBar = horizontalScrollBar();
   QScrollBar *vBar = verticalScrollBar();
   QPoint delta = panTo - _prevPan;

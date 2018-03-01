@@ -50,11 +50,11 @@
 //#include <QLineEdit>
 //#include <QProgressBar>
 
-QHostAddress SERVERADDR=QHostAddress("10.18.129.173");
-const quint16 PORT=1129;
+//QHostAddress SERVERADDR=QHostAddress("10.18.129.173");
+//const quint16 PORT=1129;
 
-//QHostAddress SERVERADDR=QHostAddress("127.0.0.1");
-//const quint16 PORT=80100;
+QHostAddress SERVERADDR=QHostAddress("10.18.30.234");
+const quint16 PORT=50008;
 
 
 VisualizationWorkstationExtensionPlugin::VisualizationWorkstationExtensionPlugin() :
@@ -161,6 +161,7 @@ void VisualizationWorkstationExtensionPlugin::onBeginClicked() {
     _settings->setValue("lastOpenendPath", QFileInfo(qfilename).dir().path());
     if(!qfilename.isEmpty()) {
         QStringList secs= qfilename.split(QRegExp("[/]"));
+        full_fn=qfilename;
         int len=secs.length();
         f_name=secs.at(len-1);
 //        fName->setText(f_name);
@@ -179,7 +180,8 @@ void VisualizationWorkstationExtensionPlugin::onBeginClicked() {
         verpro->addLayout(hprogress);
 
         processThread* transThr=new processThread(f_name,qfilename,tpro);
-        connect(transThr,SIGNAL(xmldone(QString)),this,SLOT(onShowClicked(QString)));
+        connect(transThr,SIGNAL(xmldone(QString,QString)),this,SLOT(onShowClicked(QString,QString)));
+        connect(transThr,SIGNAL(wronginfo(QString)),this,SLOT(showinfo(QString)));
         transThr->start();
       //  socketTrans();
     }
@@ -201,7 +203,7 @@ void VisualizationWorkstationExtensionPlugin::socketTrans(){
 
 void VisualizationWorkstationExtensionPlugin::sendFileName(){
     cSocket->waitForBytesWritten();
-    cSocket->write(f_name.toStdString().c_str(),strlen(f_name.toStdString().c_str()));
+    cSocket->write(full_fn.toStdString().c_str(),strlen(full_fn.toStdString().c_str()));
     cSocket->flush();
 }
 
@@ -268,7 +270,7 @@ void VisualizationWorkstationExtensionPlugin::displayError(QAbstractSocket::Sock
 
 }
 
-void VisualizationWorkstationExtensionPlugin::onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName) {
+void VisualizationWorkstationExtensionPlugin::onxmlLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName,QString fln2) {
   std::shared_ptr<MultiResolutionImage> local_img = img.lock();
   _backgroundDimensions = local_img->getDimensions();
   if (_dockWidget) {
@@ -276,9 +278,11 @@ void VisualizationWorkstationExtensionPlugin::onxmlLoaded(std::weak_ptr<MultiRes
   }
   if (!fileName.empty()) {
     std::string base = core::extractBaseName(fileName);
-
+    std::string partfn=fln2.toStdString();
+    std::string part_base = core::extractBaseName(partfn);
     std::string likImgPth = core::completePath(base + ".tif", core::extractFilePath(fileName));
     std::string xmlPath = core::completePath(base + ".xml", core::extractFilePath(fileName));
+    std::string xmlPath2 = ""+part_base+ ".xml";
     //this->loadNewForegroundImage(likImgPth);
     if (core::fileExists(xmlPath)) {
       _xmlRepo->setSource(xmlPath);
@@ -291,7 +295,7 @@ void VisualizationWorkstationExtensionPlugin::onxmlLoaded(std::weak_ptr<MultiRes
 //    anno->onNewImageLoaded(img,fileName);
 }
 
-void VisualizationWorkstationExtensionPlugin::onShowClicked(QString fn_){
+void VisualizationWorkstationExtensionPlugin::onShowClicked(QString fn_,QString fn2_){
     if (!_qtAnnotations.empty()) {
       removeSegmentationsFromViewer();
     }
@@ -309,7 +313,7 @@ void VisualizationWorkstationExtensionPlugin::onShowClicked(QString fn_){
                     openslide_img->setIgnoreAlpha(false);
                   }
                 _viewer2->initialize(_img);
-                onxmlLoaded(_img,fn);
+                onxmlLoaded(_img,fn,fn2_);
                 }
               }
 }
@@ -317,10 +321,19 @@ void VisualizationWorkstationExtensionPlugin::onShowClicked(QString fn_){
 void VisualizationWorkstationExtensionPlugin::oncloseclicked(QString ofn){
     QCheckBox *cf= filelist->findChild<QCheckBox*>(ofn);
     cf->deleteLater();
+//    QList<QCheckBox*> fls= filelist->findChildren<QCheckBox*>(ofn);
+//    if(fls.length()>1){
+//        //for(QCheckBox* aimfn:fls) aimfn->deleteLater();
+//        fls.at(0)->deleteLater();
+//    }
 }
 
 void VisualizationWorkstationExtensionPlugin::oncloseclicked2(QString ofn){
     QCheckBox *cf= filelist->findChild<QCheckBox*>(ofn);
+//    QList<QCheckBox*> fls= filelist->findChildren<QCheckBox*>(ofn);
+//    if(fls.length()>1){
+//        //fls.at(fls.length()-1)->setChecked(false);
+//    }
     cf->setChecked(false);
 }
 
@@ -419,23 +432,50 @@ void processThread::readMessageFromTCPServer()
 {
 
     QString r_str=cSocket->readAll();
-    int val=std::stoi(r_str.toStdString());
+    int val;
+    try{
+        val=std::stoi(r_str.toStdString());
+    }
+    catch(std::invalid_argument& e){
+        emit wronginfo(r_str);
+        prog->deleteLater();
+        return;
+        //QMessageBox::about(0,"info",r_str);
+    }
+
     emit valChanged(val);
     while (val<100) {
         bool read= cSocket->waitForReadyRead();
         if(read){
         r_str=cSocket->readAll();
+        try{
         val=std::stoi(r_str.toStdString());
+        }
+        catch(std::invalid_argument& e){
+            if(r_str=="good")  break;
+            else
+            {
+            emit wronginfo(r_str);
+            prog->deleteLater();
+            //QMessageBox::about(0,"info",r_str);
+            continue;
+            }
+        }
         if(val) emit valChanged(val);
         }
     }
-    if(val>=100){
+    if(val>=100||(r_str=="good")){
+        val=100;
+        emit valChanged(val);
         stopped=true;
-        emit xmldone(fflnm);
+        emit xmldone(fflnm,flnm);
         return;
     }
 }
 
+void VisualizationWorkstationExtensionPlugin::showinfo(QString winfo){
+    QMessageBox::about(_dockWidget,"info",winfo);
+}
 
 void VisualizationWorkstationExtensionPlugin::onNewImageLoaded(std::weak_ptr<MultiResolutionImage> img, std::string fileName) {
   std::shared_ptr<MultiResolutionImage> local_img = img.lock();

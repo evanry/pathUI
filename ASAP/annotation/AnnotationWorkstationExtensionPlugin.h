@@ -32,6 +32,7 @@ public :
     AnnotationWorkstationExtensionPlugin();
     ~AnnotationWorkstationExtensionPlugin();
     void startAnnotation(float x, float y, const std::string& type);
+    void startAnnotation2(float x, float y, const std::string& type);
     void finishAnnotation(bool cancel = false);
     QDockWidget* getDockWidget();
     QtAnnotation* getActiveAnnotation();
@@ -56,6 +57,7 @@ public slots:
     void onLoadButtonPressed(const std::string& filePath = std::string());
     void onLoadButtonPressed2(const std::string& filePath = std::string());
     bool onSaveButtonPressed();
+    void onSaveButtonPressed3(const QString&);
     void onItemNameChanged(QTreeWidgetItem* item, int column);
     void onTreeWidgetItemDoubleClicked(QTreeWidgetItem * item, int column);
     void onTreeWidgetSelectedItemsChanged();
